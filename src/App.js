@@ -24,6 +24,7 @@ const App = () => {
   const [awayScore, setAwayScore] = useState("");
   const [semiFinalTeams, setSemiFinalTeams] = useState([]);
   const [tournamentName, setTournamentName] = useState("Season 1");
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -48,7 +49,13 @@ const App = () => {
   const handleCalculateSemifinal = async () => {
     const teams = calculateSemiFinalists(matches);
     console.log("====Teams ==== ", teams);
-    await updateTeamsInMatches(teams, tournamentName);
+    setSemiFinalTeams(teams);
+    setShowConfirmPopup(true);
+  };
+
+  const handleConfirmUpdateTeams = async () => {
+    setShowConfirmPopup(false);
+    await updateTeamsInMatches(semiFinalTeams, tournamentName);
   };
 
   const handleSelectMatch = (match) => {
@@ -77,13 +84,6 @@ const App = () => {
       setHomeScore("");
       setAwayScore("");
     }
-  };
-
-  const handleSelectSemiFinalTeams = () => {
-    const winners = matches
-      .filter((match) => match.result)
-      .map((match) => match.homeTeam); // Simplified logic
-    setSemiFinalTeams(winners.slice(0, 4)); // Select first 4 winners as semi-finalists
   };
 
   return (
@@ -179,21 +179,41 @@ const App = () => {
         </div>
       )}
 
-      <div className="mt-8">
-        <button
-          onClick={handleSelectSemiFinalTeams}
-          className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded mb-4"
-        >
-          Select Semi-Final Teams
-        </button>
-        <ul className="list-disc pl-5">
-          {semiFinalTeams.map((team, index) => (
-            <li key={index} className="text-lg">
-              {team}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {showConfirmPopup && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center px-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Confirm Update
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to update the teams for the semifinals?
+            </p>
+            <div className="mt-8">
+              <ul className="list-disc pl-5">
+                {semiFinalTeams.map((team, index) => (
+                  <li key={index} className="text-lg">
+                    {team}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowConfirmPopup(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmUpdateTeams}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
