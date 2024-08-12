@@ -7,7 +7,7 @@ export const shuffleArray = (array) => {
   return array;
 };
 
-export const generateMatches = (teams, tournamentName = "Season 1") => {
+export const generateMatches = (teams, tournamentName) => {
   if (teams.length !== 8) {
     throw new Error("There must be exactly 8 teams.");
   }

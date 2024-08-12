@@ -6,8 +6,21 @@ import {
   getDocs,
   query,
   where,
+  Timestamp,
 } from "firebase/firestore";
 import db from "./firebaseConfig";
+
+export const getTournamentsFromFirestore = async () => {
+  const tournamentCollection = collection(db, "tournaments");
+  const querySnapshot = await getDocs(tournamentCollection);
+  const tournaments = [];
+
+  querySnapshot.forEach((doc) => {
+    tournaments.push({ id: doc.id, ...doc.data() });
+  });
+
+  return tournaments;
+};
 
 export const saveMatchesToFirestore = async (matches) => {
   const matchCollection = collection(db, "matches");
@@ -29,13 +42,22 @@ export const setMatchResult = async (matchDay, result) => {
   });
 };
 
-export const getMatchesFromFirestore = async () => {
+export const getMatchesFromFirestore = async (tournamentName) => {
   const matchCollection = collection(db, "matches");
-  const querySnapshot = await getDocs(matchCollection);
+
+  // Create a query to filter matches by the tournament name
+  const q = query(
+    matchCollection,
+    where("tournamentName", "==", tournamentName)
+  );
+
+  const querySnapshot = await getDocs(q);
   const matches = [];
+
   querySnapshot.forEach((doc) => {
     matches.push({ id: doc.id, ...doc.data() });
   });
+
   return matches;
 };
 
@@ -112,4 +134,21 @@ export const updateFinalTeams = async (teams, tournamentName) => {
   } else {
     console.log("No final match found for the specified tournament.");
   }
+};
+
+// New function to create a tournament
+export const createTournament = async (name, teams) => {
+  const tournamentCollection = collection(db, "tournaments");
+
+  const tournament = {
+    name,
+    teams,
+    winner: null,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  };
+
+  const docRef = await addDoc(tournamentCollection, tournament);
+  console.log("Tournament created successfully with ID:", docRef.id);
+  return docRef.id;
 };
