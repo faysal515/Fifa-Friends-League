@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { generateMatches, sortMatches, calculateSemiFinalists } from "./utils";
+import {
+  generateMatches,
+  sortMatches,
+  calculateSemiFinalists,
+  calculateFinalists,
+} from "./utils";
 import {
   saveMatchesToFirestore,
   setMatchResult,
   getMatchesFromFirestore,
   updateSemifinalTeams,
+  updateFinalTeams,
 } from "./firestoreFunctions";
 
 const App = () => {
@@ -23,8 +29,10 @@ const App = () => {
   const [homeScore, setHomeScore] = useState("");
   const [awayScore, setAwayScore] = useState("");
   const [semiFinalTeams, setSemiFinalTeams] = useState([]);
+  const [finalistTeams, setFinalistTeams] = useState([]);
   const [tournamentName, setTournamentName] = useState("Season 1");
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [showFinalistPopup, setShowFinalistPopup] = useState(false);
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -53,9 +61,26 @@ const App = () => {
     setShowConfirmPopup(true);
   };
 
-  const handleConfirmUpdateTeams = async () => {
+  const handleConfirmUpdateSemifinalTeams = async () => {
     setShowConfirmPopup(false);
     await updateSemifinalTeams(semiFinalTeams, tournamentName);
+  };
+
+  const handleCalculateFinalist = async () => {
+    try {
+      const teams = calculateFinalists(matches);
+      console.log("====Finalists ==== ", teams);
+      setFinalistTeams(teams);
+      setShowFinalistPopup(true);
+    } catch (error) {
+      console.error(error.message);
+      alert(error.message);
+    }
+  };
+
+  const handleConfirmUpdateFinalTeams = async () => {
+    setShowFinalistPopup(false);
+    await updateFinalTeams(finalistTeams, tournamentName);
   };
 
   const handleSelectMatch = (match) => {
@@ -101,6 +126,13 @@ const App = () => {
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
       >
         Calculate Semifinalist
+      </button>
+
+      <button
+        onClick={handleCalculateFinalist}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
+      >
+        Calculate Finalist
       </button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -188,15 +220,13 @@ const App = () => {
             <p className="text-sm text-gray-600 mb-4">
               Are you sure you want to update the teams for the semifinals?
             </p>
-            <div className="mt-8">
-              <ul className="list-disc pl-5">
-                {semiFinalTeams.map((team, index) => (
-                  <li key={index} className="text-lg">
-                    {team}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ul className="list-disc pl-5 mb-4">
+              {semiFinalTeams.map((team, index) => (
+                <li key={index} className="text-lg">
+                  {team}
+                </li>
+              ))}
+            </ul>
             <div className="mt-6 flex justify-end space-x-3">
               <button
                 onClick={() => setShowConfirmPopup(false)}
@@ -205,7 +235,7 @@ const App = () => {
                 Cancel
               </button>
               <button
-                onClick={handleConfirmUpdateTeams}
+                onClick={handleConfirmUpdateSemifinalTeams}
                 className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Confirm
@@ -214,6 +244,50 @@ const App = () => {
           </div>
         </div>
       )}
+
+      {showFinalistPopup && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center px-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Confirm Update
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to update the teams for the final?
+            </p>
+            <ul className="list-disc pl-5 mb-4">
+              {finalistTeams.map((team, index) => (
+                <li key={index} className="text-lg">
+                  {team}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowFinalistPopup(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmUpdateFinalTeams}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-8">
+        <ul className="list-disc pl-5">
+          {semiFinalTeams.map((team, index) => (
+            <li key={index} className="text-lg">
+              {team}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

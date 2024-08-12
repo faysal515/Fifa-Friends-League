@@ -142,17 +142,30 @@ export const calculateFinalists = (matches) => {
       (match) => match.matchName === `SF${i}`
     );
 
-    if (sfMatches.length !== 1) {
+    if (sfMatches.length !== 2) {
       console.error(`Incomplete data for SF${i}`);
       continue;
     }
 
-    let winner = null;
-    const [homeGoals, awayGoals] = sfMatches[0].result.split("-").map(Number);
+    let totalHomeGoals = 0;
+    let totalAwayGoals = 0;
 
-    if (homeGoals > awayGoals) {
+    sfMatches.forEach((match) => {
+      const [homeGoals, awayGoals] = match.result.split("-").map(Number);
+      if (match.homeTeam === sfMatches[0].homeTeam) {
+        totalHomeGoals += homeGoals;
+        totalAwayGoals += awayGoals;
+      } else {
+        totalHomeGoals += awayGoals;
+        totalAwayGoals += homeGoals;
+      }
+    });
+
+    let winner = null;
+
+    if (totalHomeGoals > totalAwayGoals) {
       winner = sfMatches[0].homeTeam;
-    } else if (awayGoals > homeGoals) {
+    } else if (totalAwayGoals > totalHomeGoals) {
       winner = sfMatches[0].awayTeam;
     } else {
       throw new Error(`Tie in SF${i}. A tie-breaker must be implemented.`);
