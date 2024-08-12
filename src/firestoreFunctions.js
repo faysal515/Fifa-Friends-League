@@ -34,13 +34,12 @@ export const getMatchesFromFirestore = async () => {
   const querySnapshot = await getDocs(matchCollection);
   const matches = [];
   querySnapshot.forEach((doc) => {
-    // console.log(">>>> ", { ...doc.data() });
     matches.push({ id: doc.id, ...doc.data() });
   });
   return matches;
 };
 
-export const updateTeamsInMatches = async (teams, tournamentName) => {
+export const updateSemifinalTeams = async (teams, tournamentName) => {
   const matchCollection = collection(db, "matches");
 
   const q = query(
@@ -83,4 +82,34 @@ export const updateTeamsInMatches = async (teams, tournamentName) => {
   });
 
   console.log("Team names updated successfully in matches starting with 'SF'.");
+};
+
+export const updateFinalTeams = async (teams, tournamentName) => {
+  const matchCollection = collection(db, "matches");
+
+  // Query to find the final match in the specified tournament
+  const q = query(
+    matchCollection,
+    where("tournamentName", "==", tournamentName),
+    where("matchName", "==", "Final")
+  );
+
+  const querySnapshot = await getDocs(q);
+
+  if (!querySnapshot.empty) {
+    const doc = querySnapshot.docs[0];
+    const matchData = doc.data();
+    let updatedFields = {};
+
+    // Assuming the teams array has two elements, one for home and one for away
+    updatedFields.homeTeam = teams[0];
+    updatedFields.awayTeam = teams[1];
+
+    // Perform the update
+    await updateDoc(doc.ref, updatedFields);
+
+    console.log("Final team names updated successfully.");
+  } else {
+    console.log("No final match found for the specified tournament.");
+  }
 };

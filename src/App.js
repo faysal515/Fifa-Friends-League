@@ -4,7 +4,7 @@ import {
   saveMatchesToFirestore,
   setMatchResult,
   getMatchesFromFirestore,
-  updateTeamsInMatches,
+  updateSemifinalTeams,
 } from "./firestoreFunctions";
 
 const App = () => {
@@ -55,7 +55,7 @@ const App = () => {
 
   const handleConfirmUpdateTeams = async () => {
     setShowConfirmPopup(false);
-    await updateTeamsInMatches(semiFinalTeams, tournamentName);
+    await updateSemifinalTeams(semiFinalTeams, tournamentName);
   };
 
   const handleSelectMatch = (match) => {

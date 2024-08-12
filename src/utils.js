@@ -121,7 +121,6 @@ export const calculateSemiFinalists = (matches) => {
     } else if (totalAwayGoals > totalHomeGoals) {
       winner = qfMatches[0].awayTeam;
     } else {
-      // In case of a tie, you might want to implement a tie-breaker rule
       console.warn(`Tie in QF${i}. Implement tie-breaker.`);
       winner = "TBD";
     }
@@ -130,4 +129,37 @@ export const calculateSemiFinalists = (matches) => {
   }
 
   return semiFinalists;
+};
+
+export const calculateFinalists = (matches) => {
+  const semiFinals = matches.filter((match) =>
+    match.matchName.startsWith("SF")
+  );
+  const finalists = [];
+
+  for (let i = 1; i <= 2; i++) {
+    const sfMatches = semiFinals.filter(
+      (match) => match.matchName === `SF${i}`
+    );
+
+    if (sfMatches.length !== 1) {
+      console.error(`Incomplete data for SF${i}`);
+      continue;
+    }
+
+    let winner = null;
+    const [homeGoals, awayGoals] = sfMatches[0].result.split("-").map(Number);
+
+    if (homeGoals > awayGoals) {
+      winner = sfMatches[0].homeTeam;
+    } else if (awayGoals > homeGoals) {
+      winner = sfMatches[0].awayTeam;
+    } else {
+      throw new Error(`Tie in SF${i}. A tie-breaker must be implemented.`);
+    }
+
+    finalists.push(winner);
+  }
+
+  return finalists;
 };
