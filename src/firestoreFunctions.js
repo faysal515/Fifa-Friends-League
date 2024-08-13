@@ -32,15 +32,24 @@ export const saveMatchesToFirestore = async (matches) => {
   console.log("Matches saved to Firestore successfully.");
 };
 
-export const setMatchResult = async (matchDay, result) => {
+export const setMatchResult = async (matchDay, result, tournamentName) => {
   const matchCollection = collection(db, "matches");
-  const q = query(matchCollection, where("matchDay", "==", matchDay));
+  console.log(">>>> ", { matchDay, result, tournamentName });
+
+  const q = query(
+    matchCollection,
+    where("matchDay", "==", matchDay),
+    where("tournamentName", "==", tournamentName)
+  );
+
   const querySnapshot = await getDocs(q);
   querySnapshot.forEach(async (doc) => {
     const matchDoc = doc.ref;
-    console.log(">>>> ", matchDoc);
+
     await updateDoc(matchDoc, { result });
-    console.log(`Result set for match ${matchDay}`);
+    console.log(
+      `Result set for match ${matchDay} in tournament ${tournamentName}`
+    );
   });
 };
 
