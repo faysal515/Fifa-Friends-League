@@ -14,11 +14,11 @@ import {
   createTournament,
   getTournamentsFromFirestore,
 } from "./firestoreFunctions";
+import CreateTournamentPopup from "./CreateTournament";
 
 const App = () => {
   const [tournaments, setTournaments] = useState([]);
   const [selectedTournament, setSelectedTournament] = useState(null);
-  const [teams, setTeams] = useState([]);
   const [matches, setMatches] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [homeScore, setHomeScore] = useState("");
@@ -40,7 +40,6 @@ const App = () => {
       if (tournamentsList.length > 0) {
         const lastTournament = tournamentsList[tournamentsList.length - 1];
         setSelectedTournament(lastTournament);
-        setTeams(lastTournament.teams);
       }
     };
 
@@ -83,7 +82,6 @@ const App = () => {
       setTournaments(tournamentsList);
       const lastTournament = tournamentsList[tournamentsList.length - 1];
       setSelectedTournament(lastTournament);
-      setTeams(teamsArray);
 
       setShowCreateTournamentPopup(false);
       setNewTournamentName("");
@@ -189,7 +187,6 @@ const App = () => {
                 }`}
                 onClick={() => {
                   setSelectedTournament(tournament);
-                  setTeams(tournament.teams);
                 }}
               >
                 {tournament.name}
@@ -252,54 +249,15 @@ const App = () => {
         </div>
       </div>
 
-      {/* Create Tournament Popup */}
-      {showCreateTournamentPopup && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center px-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              Create New Tournament
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Tournament Name
-                </label>
-                <input
-                  type="text"
-                  value={newTournamentName}
-                  onChange={(e) => setNewTournamentName(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Team Names (comma separated)
-                </label>
-                <input
-                  type="text"
-                  value={newTeamNames}
-                  onChange={(e) => setNewTeamNames(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                />
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowCreateTournamentPopup(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateTournamentSubmit}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CreateTournamentPopup
+        show={showCreateTournamentPopup}
+        onClose={() => setShowCreateTournamentPopup(false)}
+        onSubmit={handleCreateTournamentSubmit}
+        tournamentName={newTournamentName}
+        setTournamentName={setNewTournamentName}
+        teamNames={newTeamNames}
+        setTeamNames={setNewTeamNames}
+      />
 
       {selectedMatch && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center px-4">

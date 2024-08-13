@@ -7,12 +7,15 @@ import {
   query,
   where,
   Timestamp,
+  orderBy,
 } from "firebase/firestore";
 import db from "./firebaseConfig";
 
 export const getTournamentsFromFirestore = async () => {
   const tournamentCollection = collection(db, "tournaments");
-  const querySnapshot = await getDocs(tournamentCollection);
+  const q = query(tournamentCollection, orderBy("createdAt", "desc"));
+
+  const querySnapshot = await getDocs(q);
   const tournaments = [];
 
   querySnapshot.forEach((doc) => {
@@ -21,7 +24,6 @@ export const getTournamentsFromFirestore = async () => {
 
   return tournaments;
 };
-
 export const saveMatchesToFirestore = async (matches) => {
   const matchCollection = collection(db, "matches");
   for (const match of matches) {
