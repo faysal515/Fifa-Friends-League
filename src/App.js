@@ -150,14 +150,12 @@ const App = () => {
         selectedMatch.matchName
       );
 
-      // Update the match result in Firestore for the specific tournament
       await setMatchResult(
         selectedMatch.matchDay,
         result,
         selectedTournament.name
       );
 
-      // Update the match result in the local state
       const updatedMatches = matches.map((match) =>
         match.id === selectedMatch.id ? { ...match, result } : match
       );
@@ -167,8 +165,55 @@ const App = () => {
       setSelectedMatch(null);
       setHomeScore("");
       setAwayScore("");
+
+      // Check if all QF matches are finished to calculate semifinalists
+      const qfMatches = sortedMatches.filter((match) =>
+        match.matchName.startsWith("QF")
+      );
+      const allQfFinished = qfMatches.every((match) => match.result);
+
+      if (allQfFinished) {
+        const teams = calculateSemiFinalists(sortedMatches);
+        await updateSemifinalTeams(teams, selectedTournament.name);
+      }
+
+      // Check if all SF matches are finished to calculate finalists
+      const sfMatches = sortedMatches.filter((match) =>
+        match.matchName.startsWith("SF")
+      );
+      const allSfFinished = sfMatches.every((match) => match.result);
+
+      if (allSfFinished) {
+        try {
+          const teams = calculateFinalists(sortedMatches);
+          await updateFinalTeams(teams, selectedTournament.name);
+        } catch (error) {
+          console.error("EEE ", error);
+        }
+      }
     }
   };
+
+  const renderMatchCard = (match, index) => (
+    <div key={index} className="bg-white shadow-md rounded-lg p-4">
+      <div className="text-sm text-gray-600 mb-2">
+        Match #{match.matchDay} - {match.matchName}
+      </div>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-lg font-semibold">{match.homeTeam}</div>
+        <div className="text-xl font-bold">
+          {match.result ? match.result : "vs"}
+        </div>
+        <div className="text-lg font-semibold">{match.awayTeam}</div>
+      </div>
+      <button
+        onClick={() => handleSelectMatch(match)}
+        className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+      >
+        Update Score
+      </button>
+    </div>
+  );
 
   return (
     <div className="container mx-auto p-4">
@@ -210,47 +255,8 @@ const App = () => {
                 Matches for {selectedTournament.name}
               </h2>
 
-              <button
-                onClick={handleCalculateSemifinal}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
-              >
-                Calculate Semifinalist
-              </button>
-
-              <button
-                onClick={handleCalculateFinalist}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
-              >
-                Calculate Finalist
-              </button>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {matches.map((match, index) => (
-                  <div
-                    key={index}
-                    className="bg-white shadow-md rounded-lg p-4"
-                  >
-                    <div className="text-sm text-gray-600 mb-2">
-                      Match #{match.matchDay} - {match.matchName}
-                    </div>
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="text-lg font-semibold">
-                        {match.homeTeam}
-                      </div>
-                      <div className="text-xl font-bold">
-                        {match.result ? match.result : "vs"}
-                      </div>
-                      <div className="text-lg font-semibold">
-                        {match.awayTeam}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleSelectMatch(match)}
-                      className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                    >
-                      Update Score
-                    </button>
-                  </div>
-                ))}
+                {matches.map(renderMatchCard)}
               </div>
             </div>
           )}
