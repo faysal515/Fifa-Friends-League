@@ -89,15 +89,13 @@ const App = () => {
       setNewTournamentName("");
       setNewTeamNames("");
 
-      await handleGenerateMatches(newTournamentName);
+      await handleGenerateMatches(newTournamentName, teamsArray);
     } else {
       alert("Please enter both a tournament name and team names.");
     }
   };
 
-  const handleGenerateMatches = async (newTournamentName) => {
-    // if (!selectedTournament) throw new Error("No tournament is selected");
-
+  const handleGenerateMatches = async (newTournamentName, teams) => {
     const generatedMatches = generateMatches(teams, newTournamentName);
     const sortedMatches = sortMatches(generatedMatches);
     console.log("==== ", sortedMatches);
