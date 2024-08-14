@@ -45,12 +45,16 @@ const App = () => {
 
   useEffect(() => {
     const fetchTournaments = async () => {
-      const tournamentsList = await getTournamentsFromFirestore();
-      setTournaments(tournamentsList);
+      try {
+        const tournamentsList = await getTournamentsFromFirestore();
+        setTournaments(tournamentsList);
 
-      if (tournamentsList.length > 0) {
-        const lastTournament = tournamentsList[tournamentsList.length - 1];
-        setSelectedTournament(lastTournament);
+        if (tournamentsList.length > 0) {
+          const lastTournament = tournamentsList[tournamentsList.length - 1];
+          setSelectedTournament(lastTournament);
+        }
+      } catch (error) {
+        showNotification(error.message, "error");
       }
     };
 
@@ -59,14 +63,18 @@ const App = () => {
 
   useEffect(() => {
     const fetchMatches = async () => {
-      if (selectedTournament) {
-        const fetchedMatches = await getMatchesFromFirestore(
-          selectedTournament.name
-        );
-        const sortedMatches = sortMatches(fetchedMatches);
-        setMatches(sortedMatches);
+      try {
+        if (selectedTournament) {
+          const fetchedMatches = await getMatchesFromFirestore(
+            selectedTournament.name
+          );
+          const sortedMatches = sortMatches(fetchedMatches);
+          setMatches(sortedMatches);
 
-        console.log(">>>> ", { sortedMatches });
+          console.log(">>>> ", { sortedMatches });
+        }
+      } catch (error) {
+        showNotification(error.message, "error");
       }
     };
 
@@ -78,51 +86,67 @@ const App = () => {
   };
 
   const handleCreateTournamentSubmit = async () => {
-    if (newTournamentName && newTeamNames) {
-      const teamsArray = newTeamNames.split(",").map((team) => team.trim());
-      if (teamsArray.length !== 8) {
-        throw new Error("There must be exactly 8 teams.");
+    try {
+      if (newTournamentName && newTeamNames) {
+        const teamsArray = newTeamNames.split(",").map((team) => team.trim());
+        if (teamsArray.length !== 8) {
+          throw new Error("There must be exactly 8 teams.");
+        }
+        const tournamentId = await createTournament(
+          newTournamentName,
+          teamsArray
+        );
+        console.log("Tournament created with ID: ", tournamentId);
+
+        const tournamentsList = await getTournamentsFromFirestore();
+        setTournaments(tournamentsList);
+        const lastTournament = tournamentsList[tournamentsList.length - 1];
+        setSelectedTournament(lastTournament);
+
+        setShowCreateTournamentPopup(false);
+        setNewTournamentName("");
+        setNewTeamNames("");
+
+        await handleGenerateMatches(newTournamentName, teamsArray);
+      } else {
+        alert("Please enter both a tournament name and team names.");
       }
-      const tournamentId = await createTournament(
-        newTournamentName,
-        teamsArray
-      );
-      console.log("Tournament created with ID: ", tournamentId);
-
-      const tournamentsList = await getTournamentsFromFirestore();
-      setTournaments(tournamentsList);
-      const lastTournament = tournamentsList[tournamentsList.length - 1];
-      setSelectedTournament(lastTournament);
-
-      setShowCreateTournamentPopup(false);
-      setNewTournamentName("");
-      setNewTeamNames("");
-
-      await handleGenerateMatches(newTournamentName, teamsArray);
-    } else {
-      alert("Please enter both a tournament name and team names.");
+    } catch (error) {
+      showNotification(error.message, "error");
     }
   };
 
   const handleGenerateMatches = async (newTournamentName, teams) => {
-    const generatedMatches = generateMatches(teams, newTournamentName);
-    const sortedMatches = sortMatches(generatedMatches);
-    console.log("==== ", sortedMatches);
-    setMatches(sortedMatches);
-    await saveMatchesToFirestore(sortedMatches);
+    try {
+      const generatedMatches = generateMatches(teams, newTournamentName);
+      const sortedMatches = sortMatches(generatedMatches);
+      console.log("==== ", sortedMatches);
+      setMatches(sortedMatches);
+      await saveMatchesToFirestore(sortedMatches);
+    } catch (error) {
+      showNotification(error.message, "error");
+    }
   };
 
   const handleConfirmUpdateSemifinalTeams = async () => {
-    setShowConfirmPopup(false);
-    if (selectedTournament) {
-      await updateSemifinalTeams(semiFinalTeams, selectedTournament.name);
+    try {
+      setShowConfirmPopup(false);
+      if (selectedTournament) {
+        await updateSemifinalTeams(semiFinalTeams, selectedTournament.name);
+      }
+    } catch (error) {
+      showNotification(error.message, "error");
     }
   };
 
   const handleConfirmUpdateFinalTeams = async () => {
-    setShowFinalistPopup(false);
-    if (selectedTournament) {
-      await updateFinalTeams(finalistTeams, selectedTournament.name);
+    try {
+      setShowFinalistPopup(false);
+      if (selectedTournament) {
+        await updateFinalTeams(finalistTeams, selectedTournament.name);
+      }
+    } catch (error) {
+      showNotification(error.message, "error");
     }
   };
 
@@ -206,7 +230,7 @@ const App = () => {
       }
     } catch (error) {
       console.error("Failed to update score:", error);
-      // Add notification here if you have a notification system
+      showNotification(error.message, "error");
     }
   };
 
