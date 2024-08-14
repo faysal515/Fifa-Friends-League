@@ -238,26 +238,27 @@ const App = () => {
     }
   };
 
-  const renderMatchCard = (match, index) => (
-    <div key={index} className="bg-white shadow-md rounded-lg p-4">
-      <div className="text-sm text-gray-600 mb-2">
-        Match #{match.matchDay} - {match.matchName}
-      </div>
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-lg font-semibold">{match.homeTeam}</div>
-        <div className="text-xl font-bold">
-          {match.result ? match.result : "vs"}
+  const renderMatchCard = (match) => {
+    return (
+      <div key={match.id} className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="">{`Match #${match.matchDay} - ${match.matchName}`}</h3>
+            <p className="text-2xl font-bold text-gray-600">{`${match.homeTeam} vs ${match.awayTeam}`}</p>
+          </div>
+          {match.result && (
+            <div className="text-6xl font-bold">{match.result}</div>
+          )}
         </div>
-        <div className="text-lg font-semibold">{match.awayTeam}</div>
+        <button
+          onClick={() => handleSelectMatch(match)}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-full"
+        >
+          Update Score
+        </button>
       </div>
-      <button
-        onClick={() => handleSelectMatch(match)}
-        className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Update Score
-      </button>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -269,15 +270,24 @@ const App = () => {
 
       <div className="flex">
         <div className="w-1/4 pr-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Tournaments</h2>
-            <button
-              onClick={handleCreateTournament}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full p-2"
-            >
-              +
-            </button>
+          <div className="flex items-center mb-4">
+            <img
+              src="/path-to-your-logo.png"
+              alt="Logo"
+              className="w-10 h-10 mr-3"
+            />
+            <div>
+              <h2 className="text-xl font-semibold">Tournaments</h2>
+              <p className="text-sm text-gray-500">Select a tournament</p>
+            </div>
           </div>
+
+          <button
+            onClick={handleCreateTournament}
+            className="mb-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center"
+          >
+            +
+          </button>
 
           {loadingTournaments ? (
             <div>Loading tournaments...</div>
@@ -288,13 +298,29 @@ const App = () => {
               {tournaments.map((tournament, index) => (
                 <li
                   key={index}
-                  className={`cursor-pointer ${
-                    selectedTournament === tournament ? "font-bold" : ""
+                  className={`flex items-center p-2 rounded-md cursor-pointer ${
+                    selectedTournament === tournament
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-100"
                   }`}
                   onClick={() => {
                     setSelectedTournament(tournament);
                   }}
                 >
+                  <svg
+                    className="w-5 h-5 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                    />
+                  </svg>
                   {tournament.name}
                 </li>
               ))}
@@ -317,7 +343,7 @@ const App = () => {
                     : ""}
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                   {matches.map(renderMatchCard)}
                 </div>
               </div>
