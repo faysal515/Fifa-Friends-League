@@ -163,3 +163,25 @@ export const createTournament = async (name, teams) => {
   console.log("Tournament created successfully with ID:", docRef.id);
   return docRef.id;
 };
+
+export const updateTournament = async (name, winner) => {
+  const tournamentCollection = collection(db, "tournaments");
+
+  // Query to find the tournament by name
+  const q = query(tournamentCollection, where("name", "==", name));
+  const querySnapshot = await getDocs(q);
+
+  if (!querySnapshot.empty) {
+    const docRef = querySnapshot.docs[0].ref;
+
+    // Update the winner and timestamp
+    await updateDoc(docRef, {
+      winner: winner,
+      updatedAt: Timestamp.now(),
+    });
+
+    console.log(`Tournament '${name}' updated successfully.`);
+  } else {
+    console.log(`Tournament with name '${name}' not found.`);
+  }
+};

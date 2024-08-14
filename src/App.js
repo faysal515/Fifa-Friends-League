@@ -13,9 +13,11 @@ import {
   updateFinalTeams,
   createTournament,
   getTournamentsFromFirestore,
+  updateTournament,
 } from "./firestoreFunctions";
 import CreateTournamentPopup from "./CreateTournament";
 import UpdateScorePopup from "./UpdateScore";
+import Notification from "./Notification";
 
 const App = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -32,6 +34,14 @@ const App = () => {
     useState(false);
   const [newTournamentName, setNewTournamentName] = useState("");
   const [newTeamNames, setNewTeamNames] = useState("");
+  const [notification, setNotification] = useState(null);
+
+  const showNotification = (message, type = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 2000);
+  };
 
   useEffect(() => {
     const fetchTournaments = async () => {
@@ -102,29 +112,10 @@ const App = () => {
     await saveMatchesToFirestore(sortedMatches);
   };
 
-  const handleCalculateSemifinal = async () => {
-    const teams = calculateSemiFinalists(matches);
-    console.log("====Teams ==== ", teams);
-    setSemiFinalTeams(teams);
-    setShowConfirmPopup(true);
-  };
-
   const handleConfirmUpdateSemifinalTeams = async () => {
     setShowConfirmPopup(false);
     if (selectedTournament) {
       await updateSemifinalTeams(semiFinalTeams, selectedTournament.name);
-    }
-  };
-
-  const handleCalculateFinalist = async () => {
-    try {
-      const teams = calculateFinalists(matches);
-      console.log("====Finalists ==== ", teams);
-      setFinalistTeams(teams);
-      setShowFinalistPopup(true);
-    } catch (error) {
-      console.error(error.message);
-      alert(error.message);
     }
   };
 
@@ -142,55 +133,80 @@ const App = () => {
   };
 
   const handleUpdateScore = async () => {
-    if (selectedMatch && homeScore !== "" && awayScore !== "") {
-      const result = `${homeScore}-${awayScore}`;
-      console.log(
-        "updating score for ",
-        selectedMatch.matchDay,
-        selectedMatch.matchName
-      );
+    try {
+      if (selectedMatch && homeScore !== "" && awayScore !== "") {
+        const result = `${homeScore}-${awayScore}`;
+        console.log(
+          "updating score for ",
+          selectedMatch.matchDay,
+          selectedMatch.matchName
+        );
 
-      await setMatchResult(
-        selectedMatch.matchDay,
-        result,
-        selectedTournament.name
-      );
+        await setMatchResult(
+          selectedMatch.matchDay,
+          result,
+          selectedTournament.name
+        );
 
-      const updatedMatches = matches.map((match) =>
-        match.id === selectedMatch.id ? { ...match, result } : match
-      );
+        const updatedMatches = matches.map((match) =>
+          match.id === selectedMatch.id ? { ...match, result } : match
+        );
 
-      const sortedMatches = sortMatches(updatedMatches);
-      setMatches(sortedMatches);
-      setSelectedMatch(null);
-      setHomeScore("");
-      setAwayScore("");
+        const sortedMatches = sortMatches(updatedMatches);
+        setMatches(sortedMatches);
+        setSelectedMatch(null);
+        setHomeScore("");
+        setAwayScore("");
 
-      // Check if all QF matches are finished to calculate semifinalists
-      const qfMatches = sortedMatches.filter((match) =>
-        match.matchName.startsWith("QF")
-      );
-      const allQfFinished = qfMatches.every((match) => match.result);
+        if (selectedMatch.matchName.startsWith("QF")) {
+          // Check if all QF matches are finished to calculate semifinalists
+          const qfMatches = sortedMatches.filter((match) =>
+            match.matchName.startsWith("QF")
+          );
+          const allQfFinished = qfMatches.every((match) => match.result);
+          console.log("QF status ", { qfMatches, allQfFinished });
 
-      if (allQfFinished) {
-        const teams = calculateSemiFinalists(sortedMatches);
-        await updateSemifinalTeams(teams, selectedTournament.name);
-      }
+          if (allQfFinished) {
+            console.log(
+              "All QF finished, calculating and updating semifinalist..."
+            );
+            const teams = calculateSemiFinalists(sortedMatches);
+            await updateSemifinalTeams(teams, selectedTournament.name);
+          }
+        } else if (selectedMatch.matchName.startsWith("SF")) {
+          // Check if all SF matches are finished to calculate finalists
+          const sfMatches = sortedMatches.filter((match) =>
+            match.matchName.startsWith("SF")
+          );
+          const allSfFinished = sfMatches.every((match) => match.result);
+          console.log("SF status ", { sfMatches, allSfFinished });
 
-      // Check if all SF matches are finished to calculate finalists
-      const sfMatches = sortedMatches.filter((match) =>
-        match.matchName.startsWith("SF")
-      );
-      const allSfFinished = sfMatches.every((match) => match.result);
-
-      if (allSfFinished) {
-        try {
-          const teams = calculateFinalists(sortedMatches);
-          await updateFinalTeams(teams, selectedTournament.name);
-        } catch (error) {
-          console.error("EEE ", error);
+          if (allSfFinished) {
+            try {
+              console.log(
+                "All SF finished, calculating and updating finalists..."
+              );
+              const teams = calculateFinalists(sortedMatches);
+              await updateFinalTeams(teams, selectedTournament.name);
+            } catch (error) {
+              console.error("Error calculating finalists:", error);
+            }
+          }
+        } else if (selectedMatch.matchName === "Final") {
+          // Update the tournament with the winner after the final match is updated
+          const winner =
+            homeScore > awayScore
+              ? selectedMatch.homeTeam
+              : selectedMatch.awayTeam;
+          await updateTournament(selectedTournament.name, winner);
+          console.log(
+            `Tournament '${selectedTournament.name}' updated with winner '${winner}'.`
+          );
         }
       }
+    } catch (error) {
+      console.error("Failed to update score:", error);
+      // Add notification here if you have a notification system
     }
   };
 
@@ -219,6 +235,9 @@ const App = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Football Schedule</h1>
 
+      {notification && (
+        <Notification message={notification.message} type={notification.type} />
+      )}
       <div className="flex">
         <div className="w-1/4 pr-4">
           <div className="flex justify-between items-center mb-4">
