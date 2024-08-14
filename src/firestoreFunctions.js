@@ -131,7 +131,7 @@ export const updateFinalTeams = async (teams, tournamentName) => {
 
   if (!querySnapshot.empty) {
     const doc = querySnapshot.docs[0];
-    const matchData = doc.data();
+    // const matchData = doc.data();
     let updatedFields = {};
 
     // Assuming the teams array has two elements, one for home and one for away

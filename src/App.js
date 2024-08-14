@@ -19,6 +19,7 @@ import CreateTournamentPopup from "./CreateTournament";
 import UpdateScorePopup from "./UpdateScore";
 import Notification from "./Notification";
 import Footballl from "./football.svg";
+import MatchTabs from "./MatchTab";
 
 const App = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -347,8 +348,11 @@ const App = () => {
                     : ""}
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                  {matches.map(renderMatchCard)}
+                <div className="grid">
+                  <MatchTabs
+                    matches={matches}
+                    renderMatchCard={renderMatchCard}
+                  />
                 </div>
               </div>
             )
