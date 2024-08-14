@@ -26,15 +26,15 @@ const App = () => {
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [homeScore, setHomeScore] = useState("");
   const [awayScore, setAwayScore] = useState("");
-  const [semiFinalTeams, setSemiFinalTeams] = useState([]);
-  const [finalistTeams, setFinalistTeams] = useState([]);
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
-  const [showFinalistPopup, setShowFinalistPopup] = useState(false);
   const [showCreateTournamentPopup, setShowCreateTournamentPopup] =
     useState(false);
   const [newTournamentName, setNewTournamentName] = useState("");
   const [newTeamNames, setNewTeamNames] = useState("");
   const [notification, setNotification] = useState(null);
+  const [loadingTournaments, setLoadingTournaments] = useState(false);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [noTournamentsFound, setNoTournamentsFound] = useState(false);
+  const [noMatchesFound, setNoMatchesFound] = useState(false);
 
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
@@ -46,15 +46,21 @@ const App = () => {
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
+        setLoadingTournaments(true);
         const tournamentsList = await getTournamentsFromFirestore();
         setTournaments(tournamentsList);
 
         if (tournamentsList.length > 0) {
           const lastTournament = tournamentsList[tournamentsList.length - 1];
           setSelectedTournament(lastTournament);
+          setNoTournamentsFound(false);
+        } else {
+          setNoTournamentsFound(true);
         }
       } catch (error) {
         showNotification(error.message, "error");
+      } finally {
+        setLoadingTournaments(false);
       }
     };
 
@@ -65,16 +71,27 @@ const App = () => {
     const fetchMatches = async () => {
       try {
         if (selectedTournament) {
+          setLoadingMatches(true);
           const fetchedMatches = await getMatchesFromFirestore(
             selectedTournament.name
           );
+          console.log("Fetched matches: ", fetchedMatches);
+
           const sortedMatches = sortMatches(fetchedMatches);
+          console.log("Sorted matches: ", sortedMatches);
+
           setMatches(sortedMatches);
 
-          console.log(">>>> ", { sortedMatches });
+          if (sortedMatches.length > 0) {
+            setNoMatchesFound(false);
+          } else {
+            setNoMatchesFound(true);
+          }
         }
       } catch (error) {
         showNotification(error.message, "error");
+      } finally {
+        setLoadingMatches(false);
       }
     };
 
@@ -98,18 +115,27 @@ const App = () => {
         );
         console.log("Tournament created with ID: ", tournamentId);
 
+        // Fetch the tournaments after creating the new one
         const tournamentsList = await getTournamentsFromFirestore();
         setTournaments(tournamentsList);
-        const lastTournament = tournamentsList[tournamentsList.length - 1];
-        setSelectedTournament(lastTournament);
+
+        // Set the newly created tournament as the selected one
+        const newTournament = tournamentsList.find(
+          (tournament) => tournament.id === tournamentId
+        );
+        setSelectedTournament(newTournament);
 
         setShowCreateTournamentPopup(false);
         setNewTournamentName("");
         setNewTeamNames("");
 
+        // Generate matches for the new tournament
         await handleGenerateMatches(newTournamentName, teamsArray);
       } else {
-        alert("Please enter both a tournament name and team names.");
+        showNotification(
+          "Please enter both a tournament name and team names.",
+          "error"
+        );
       }
     } catch (error) {
       showNotification(error.message, "error");
@@ -240,6 +266,7 @@ const App = () => {
       {notification && (
         <Notification message={notification.message} type={notification.type} />
       )}
+
       <div className="flex">
         <div className="w-1/4 pr-4">
           <div className="flex justify-between items-center mb-4">
@@ -252,37 +279,49 @@ const App = () => {
             </button>
           </div>
 
-          <ul className="space-y-2">
-            {tournaments.map((tournament, index) => (
-              <li
-                key={index}
-                className={`cursor-pointer ${
-                  selectedTournament === tournament ? "font-bold" : ""
-                }`}
-                onClick={() => {
-                  setSelectedTournament(tournament);
-                }}
-              >
-                {tournament.name}
-              </li>
-            ))}
-          </ul>
+          {loadingTournaments ? (
+            <div>Loading tournaments...</div>
+          ) : noTournamentsFound ? (
+            <div>No tournament found, create one!</div>
+          ) : (
+            <ul className="space-y-2">
+              {tournaments.map((tournament, index) => (
+                <li
+                  key={index}
+                  className={`cursor-pointer ${
+                    selectedTournament === tournament ? "font-bold" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedTournament(tournament);
+                  }}
+                >
+                  {tournament.name}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="w-3/4">
-          {selectedTournament && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">
-                Matches for {selectedTournament.name}{" "}
-                {selectedTournament.winner
-                  ? `Winner - ${selectedTournament.winner}`
-                  : ""}
-              </h2>
+          {loadingMatches ? (
+            <div>Loading matches...</div>
+          ) : noMatchesFound ? (
+            <div>No matches found</div>
+          ) : (
+            selectedTournament && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">
+                  Matches for {selectedTournament.name}{" "}
+                  {selectedTournament.winner
+                    ? `Winner - ${selectedTournament.winner}`
+                    : ""}
+                </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {matches.map(renderMatchCard)}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {matches.map(renderMatchCard)}
+                </div>
               </div>
-            </div>
+            )
           )}
         </div>
       </div>
