@@ -18,6 +18,7 @@ import {
 import CreateTournamentPopup from "./CreateTournament";
 import UpdateScorePopup from "./UpdateScore";
 import Notification from "./Notification";
+import Footballl from "./football.svg";
 
 const App = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -68,10 +69,12 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    const fetchMatches = async () => {
+    const fetchMatchesWithDelay = async () => {
       try {
         if (selectedTournament) {
           setLoadingMatches(true);
+          await new Promise((resolve) => setTimeout(resolve, 1500)); // Delay of 1.5 seconds
+
           const fetchedMatches = await getMatchesFromFirestore(
             selectedTournament.name
           );
@@ -95,7 +98,7 @@ const App = () => {
       }
     };
 
-    fetchMatches();
+    fetchMatchesWithDelay();
   }, [selectedTournament]);
 
   const handleCreateTournament = () => {
@@ -109,6 +112,7 @@ const App = () => {
         if (teamsArray.length !== 8) {
           throw new Error("There must be exactly 8 teams.");
         }
+        await handleGenerateMatches(newTournamentName, teamsArray);
         const tournamentId = await createTournament(
           newTournamentName,
           teamsArray
@@ -129,8 +133,7 @@ const App = () => {
         setNewTournamentName("");
         setNewTeamNames("");
 
-        // Generate matches for the new tournament
-        await handleGenerateMatches(newTournamentName, teamsArray);
+        console.log("====== ", { newTournamentName, teamsArray });
       } else {
         showNotification(
           "Please enter both a tournament name and team names.",
@@ -262,26 +265,17 @@ const App = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Football Schedule</h1>
-
+      <div className="flex items-center mb-4">
+        <img src={Footballl} alt="Football Icon" className="w-10 h-10 mr-4" />
+        <h1 className="text-3xl font-bold">Friends League</h1>
+      </div>
       {notification && (
         <Notification message={notification.message} type={notification.type} />
       )}
 
       <div className="flex">
         <div className="w-1/4 pr-4">
-          <div className="flex items-center mb-4">
-            <img
-              src="/path-to-your-logo.png"
-              alt="Logo"
-              className="w-10 h-10 mr-3"
-            />
-            <div>
-              <h2 className="text-xl font-semibold">Tournaments</h2>
-              <p className="text-sm text-gray-500">Select a tournament</p>
-            </div>
-          </div>
-
+          <p>Create a Tournament</p>
           <button
             onClick={handleCreateTournament}
             className="mb-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center"
@@ -308,19 +302,20 @@ const App = () => {
                   }}
                 >
                   <svg
-                    className="w-5 h-5 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
                     xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="w-5 h-5 mr-3"
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                      d="M8 21h8M12 17v4M7 4h10v8a5 5 0 01-10 0V4zm12 0v4a2 2 0 01-2 2M5 4v4a2 2 0 002 2"
                     />
                   </svg>
+
                   {tournament.name}
                 </li>
               ))}
