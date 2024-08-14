@@ -255,9 +255,18 @@ const App = () => {
         </div>
         <button
           onClick={() => handleSelectMatch(match)}
-          className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-full"
+          className={`${
+            match.result
+              ? "bg-transparent text-gray-700 font-semibold py-2 px-4"
+              : "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-full"
+          }`}
+          style={
+            match.result
+              ? { textDecoration: "underline", cursor: "pointer" }
+              : {}
+          }
         >
-          Update Score
+          {match.result ? "Update Score" : "Save Score"}
         </button>
       </div>
     );
