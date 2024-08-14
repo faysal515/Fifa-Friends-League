@@ -271,7 +271,10 @@ const App = () => {
           {selectedTournament && (
             <div>
               <h2 className="text-xl font-semibold mb-4">
-                Matches for {selectedTournament.name}
+                Matches for {selectedTournament.name}{" "}
+                {selectedTournament.winner
+                  ? `Winner - ${selectedTournament.winner}`
+                  : ""}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
