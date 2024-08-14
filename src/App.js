@@ -128,28 +128,6 @@ const App = () => {
     }
   };
 
-  const handleConfirmUpdateSemifinalTeams = async () => {
-    try {
-      setShowConfirmPopup(false);
-      if (selectedTournament) {
-        await updateSemifinalTeams(semiFinalTeams, selectedTournament.name);
-      }
-    } catch (error) {
-      showNotification(error.message, "error");
-    }
-  };
-
-  const handleConfirmUpdateFinalTeams = async () => {
-    try {
-      setShowFinalistPopup(false);
-      if (selectedTournament) {
-        await updateFinalTeams(finalistTeams, selectedTournament.name);
-      }
-    } catch (error) {
-      showNotification(error.message, "error");
-    }
-  };
-
   const handleSelectMatch = (match) => {
     setSelectedMatch(match);
     setHomeScore("");
@@ -329,84 +307,6 @@ const App = () => {
         setAwayScore={setAwayScore}
         onUpdateScore={handleUpdateScore}
       />
-
-      {showConfirmPopup && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center px-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              Confirm Update
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to update the teams for the semifinals?
-            </p>
-            <ul className="list-disc pl-5 mb-4">
-              {semiFinalTeams.map((team, index) => (
-                <li key={index} className="text-lg">
-                  {team}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-6 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowConfirmPopup(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmUpdateSemifinalTeams}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showFinalistPopup && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center px-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              Confirm Update
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to update the teams for the final?
-            </p>
-            <ul className="list-disc pl-5 mb-4">
-              {finalistTeams.map((team, index) => (
-                <li key={index} className="text-lg">
-                  {team}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-6 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowFinalistPopup(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmUpdateFinalTeams}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="mt-8">
-        <ul className="list-disc pl-5">
-          {semiFinalTeams.map((team, index) => (
-            <li key={index} className="text-lg">
-              {team}
-            </li>
-          ))}
-        </ul>
-      </div>
     </div>
   );
 };
