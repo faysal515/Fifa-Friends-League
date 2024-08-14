@@ -278,16 +278,20 @@ const App = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center mb-4">
-        <img src={Footballl} alt="Football Icon" className="w-10 h-10 mr-4" />
-        <h1 className="text-3xl font-bold">Friends League</h1>
+        <img
+          src={Footballl}
+          alt="Football Icon"
+          className="w-8 h-8 sm:w-10 sm:h-10 mr-2 sm:mr-4"
+        />
+        <h1 className="text-2xl sm:text-3xl font-bold">Friends League</h1>
       </div>
       {notification && (
         <Notification message={notification.message} type={notification.type} />
       )}
 
-      <div className="flex">
-        <div className="w-1/4 pr-4">
-          <p>Create a Tournament</p>
+      <div className="flex flex-col md:flex-row">
+        <div className="w-full md:w-1/4 pr-0 md:pr-4 mb-6 md:mb-0">
+          <p className="mb-2">Create a Tournament</p>
           <button
             onClick={handleCreateTournament}
             className="mb-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center"
@@ -313,29 +317,26 @@ const App = () => {
                     setSelectedTournament(tournament);
                   }}
                 >
-                  {tournament.winner ? (
-                    <img
-                      src={Cup}
-                      alt="Football Icon"
-                      className="w-5 h-5 mr-3"
-                    />
-                  ) : (
-                    <img
-                      src={Shoe}
-                      alt="Football Icon"
-                      className="w-5 h-5 mr-3"
-                    />
-                  )}
-
-                  {tournament.name}
-                  {tournament.winner && ` - ${tournament.winner}`}
+                  <img
+                    src={tournament.winner ? Cup : Shoe}
+                    alt="Tournament Icon"
+                    className="w-5 h-5 mr-3 flex-shrink-0"
+                  />
+                  <div className="flex-grow overflow-hidden">
+                    <span className="truncate block">{tournament.name}</span>
+                    {tournament.winner && (
+                      <span className="text-sm text-gray-600 truncate block">
+                        Winner: {tournament.winner}
+                      </span>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        <div className="w-3/4">
+        <div className="w-full md:w-3/4">
           {loadingMatches ? (
             <div>Loading matches...</div>
           ) : noMatchesFound ? (
