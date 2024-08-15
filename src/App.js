@@ -245,15 +245,31 @@ const App = () => {
   };
 
   const renderMatchCard = (match) => {
+    const getInitials = (name) => name.slice(0, 1).toUpperCase();
+
     return (
       <div key={match.id} className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="">{`Match #${match.matchDay} - ${match.matchName}`}</h3>
-            <p className="text-2xl font-bold text-gray-600">{`${match.homeTeam} vs ${match.awayTeam}`}</p>
+            <h3 className="text-lg font-semibold mb-2">{`Match #${match.matchDay} - ${match.matchName}`}</h3>
+            <div className="flex items-center space-x-4">
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold mb-1">
+                  {getInitials(match.homeTeam)}
+                </div>
+                <span className="text-sm text-center">{match.homeTeam}</span>
+              </div>
+              <span className="text-lg font-bold">vs</span>
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold mb-1">
+                  {getInitials(match.awayTeam)}
+                </div>
+                <span className="text-sm text-center">{match.awayTeam}</span>
+              </div>
+            </div>
           </div>
           {match.result && (
-            <div className="text-6xl font-bold">{match.result}</div>
+            <div className="text-5xl font-bold">{match.result}</div>
           )}
         </div>
         <button
