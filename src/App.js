@@ -251,20 +251,24 @@ const App = () => {
       <div key={match.id} className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-lg font-semibold mb-2">{`Match #${match.matchDay} - ${match.matchName}`}</h3>
+            <h3 className="text mb-2 font-thin">{`Match #${match.matchDay}`}</h3>
             <div className="flex items-center space-x-4">
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold mb-1">
                   {getInitials(match.homeTeam)}
                 </div>
-                <span className="text-sm text-center">{match.homeTeam}</span>
+                <span className="text-sm text-center font-bold">
+                  {match.homeTeam}
+                </span>
               </div>
               <span className="text-lg font-bold">vs</span>
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold mb-1">
                   {getInitials(match.awayTeam)}
                 </div>
-                <span className="text-sm text-center">{match.awayTeam}</span>
+                <span className="text-sm text-center font-bold">
+                  {match.awayTeam}
+                </span>
               </div>
             </div>
           </div>

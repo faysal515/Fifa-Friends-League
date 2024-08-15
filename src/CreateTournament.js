@@ -1,5 +1,4 @@
-// CreateTournamentPopup.js
-import React from "react";
+import React, { useState } from "react";
 
 const CreateTournamentPopup = ({
   show,
@@ -10,6 +9,17 @@ const CreateTournamentPopup = ({
   teamNames,
   setTeamNames,
 }) => {
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsCreating(true);
+    try {
+      await onSubmit();
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   if (!show) return null;
 
   return (
@@ -28,6 +38,7 @@ const CreateTournamentPopup = ({
               value={tournamentName}
               onChange={(e) => setTournamentName(e.target.value)}
               className="w-full p-2 border rounded-md"
+              disabled={isCreating}
             />
           </div>
           <div>
@@ -39,6 +50,7 @@ const CreateTournamentPopup = ({
               value={teamNames}
               onChange={(e) => setTeamNames(e.target.value)}
               className="w-full p-2 border rounded-md"
+              disabled={isCreating}
             />
           </div>
         </div>
@@ -46,14 +58,20 @@ const CreateTournamentPopup = ({
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            disabled={isCreating}
           >
             Cancel
           </button>
           <button
-            onClick={onSubmit}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onClick={handleSubmit}
+            className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              isCreating
+                ? "bg-blue-300 text-white cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+            disabled={isCreating}
           >
-            Create
+            {isCreating ? "Creating..." : "Create"}
           </button>
         </div>
       </div>
