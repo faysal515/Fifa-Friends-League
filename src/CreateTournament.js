@@ -43,27 +43,27 @@ const CreateTournamentPopup = ({
 
         setIsCreating(true);
 
-        const tournamentId = await createTournament({
+        const tournament = await createTournament({
           name: tournamentName,
           teams: teamsArray,
           tournament_type: tournamentType,
           created_by: user.id,
         });
 
-        const tournamentsList = await getTournamentsFromSupabase(); // Fetch the latest tournaments
+        const tournamentsList = await getTournamentsFromSupabase();
         console.log("Tournament created with ID: ", {
-          tournamentId,
+          tournament,
           tournamentsList,
         });
 
-        // setTournaments(tournamentsList);
+        setTournaments(tournamentsList);
 
-        // const newTournament = tournamentsList.find(
-        //   (tournament) => tournament.id === tournamentId
-        // );
-        // setSelectedTournament(newTournament);
+        const newTournament = tournamentsList.find(
+          (t) => t.id === tournament.id
+        );
+        setSelectedTournament(newTournament);
 
-        onClose(); // Close the popup after creation
+        onClose();
         setTournamentName("");
         setTeamNames("");
       } else {

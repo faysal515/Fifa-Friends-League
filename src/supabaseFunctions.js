@@ -6,16 +6,19 @@ export const createTournament = async ({
   tournament_type,
   created_by,
 }) => {
-  const { data, error } = await supabase.from("tournaments").insert([
-    {
-      name,
-      tournament_type,
-      teams: teams,
-      winner: null,
-      created_by,
-      created_at: new Date(),
-    },
-  ]);
+  const { data, error } = await supabase
+    .from("tournaments")
+    .insert([
+      {
+        name,
+        tournament_type,
+        teams: teams,
+        winner: null,
+        created_by,
+        created_at: new Date(),
+      },
+    ])
+    .select();
 
   if (error) {
     console.error("Error creating tournament:", error);
@@ -23,7 +26,7 @@ export const createTournament = async ({
   }
 
   console.log("Tournament created successfully:", data);
-  return data;
+  return data[0];
 };
 
 export const getTournamentsFromSupabase = async () => {
