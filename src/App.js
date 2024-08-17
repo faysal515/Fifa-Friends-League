@@ -248,49 +248,52 @@ const App = () => {
     const getInitials = (name) => name.slice(0, 1).toUpperCase();
 
     return (
-      <div key={match.id} className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text mb-2 font-thin">{`Match #${match.matchDay}`}</h3>
-            <div className="flex items-center space-x-4">
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold mb-1">
-                  {getInitials(match.homeTeam)}
-                </div>
-                <span className="text-sm text-center font-bold">
-                  {match.homeTeam}
-                </span>
-              </div>
-              <span className="text-lg font-bold">vs</span>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold mb-1">
-                  {getInitials(match.awayTeam)}
-                </div>
-                <span className="text-sm text-center font-bold">
-                  {match.awayTeam}
-                </span>
-              </div>
+      <div
+        key={match.id}
+        className="bg-white rounded-lg shadow-md p-6 mb-6 flex items-center justify-between"
+      >
+        <div className="flex items-center space-x-4">
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold mb-1">
+              {getInitials(match.homeTeam)}
             </div>
+            <span className="text-sm text-center font-bold">
+              {match.homeTeam}
+            </span>
           </div>
-          {match.result && (
-            <div className="text-5xl font-bold">{match.result}</div>
-          )}
+          <div className="flex flex-col items-center">
+            {match.result ? (
+              <div className="text-3xl font-bold">{match.result}</div>
+            ) : (
+              <span className="text-lg">vs</span>
+            )}
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold mb-1">
+              {getInitials(match.awayTeam)}
+            </div>
+            <span className="text-sm text-center font-bold">
+              {match.awayTeam}
+            </span>
+          </div>
         </div>
-        <button
-          onClick={() => handleSelectMatch(match)}
-          className={`${
-            match.result
-              ? "bg-transparent text-gray-700 font-semibold py-2 px-4"
-              : "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-full"
-          }`}
-          style={
-            match.result
-              ? { textDecoration: "underline", cursor: "pointer" }
-              : {}
-          }
-        >
-          {match.result ? "Update Score" : "Save Score"}
-        </button>
+        <div className="flex-shrink-0 ml-auto">
+          <button
+            onClick={() => handleSelectMatch(match)}
+            className={`${
+              match.result
+                ? "bg-transparent text-gray-700 font-semibold py-2 px-4"
+                : "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-full"
+            }`}
+            style={
+              match.result
+                ? { textDecoration: "underline", cursor: "pointer" }
+                : {}
+            }
+          >
+            {match.result ? "Update Score" : "Save Score"}
+          </button>
+        </div>
       </div>
     );
   };
