@@ -24,6 +24,10 @@ import Footballl from "./football.svg";
 import Shoe from "./shoe.svg";
 import Cup from "./cup.svg";
 import MatchTabs from "./MatchTab";
+import {
+  getMatchesFromSupabase,
+  getTournamentsFromSupabase,
+} from "./supabaseFunctions";
 
 const App = () => {
   const [user, setUser] = useState(null); // State to track authenticated user
@@ -73,7 +77,8 @@ const App = () => {
       const fetchTournaments = async () => {
         try {
           setLoadingTournaments(true);
-          const tournamentsList = await getTournamentsFromFirestore();
+          const tournamentsList = await getTournamentsFromSupabase(user.id);
+          console.log("fetch tourn ", tournamentsList);
           setTournaments(tournamentsList);
 
           if (tournamentsList.length > 0) {
@@ -101,8 +106,8 @@ const App = () => {
           setLoadingMatches(true);
           await new Promise((resolve) => setTimeout(resolve, 1500)); // Delay of 1.5 seconds
 
-          const fetchedMatches = await getMatchesFromFirestore(
-            selectedTournament.name
+          const fetchedMatches = await getMatchesFromSupabase(
+            selectedTournament.id
           );
           console.log("Fetched matches: ", fetchedMatches);
 

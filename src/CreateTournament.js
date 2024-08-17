@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import {
   createTournament,
   getTournamentsFromSupabase,
+  insertMatchesInBulk,
 } from "./supabaseFunctions";
 import supabase from "./supabaseClient";
+import { generateMatches } from "./utils";
 
 const CreateTournamentPopup = ({
   show,
@@ -32,6 +34,7 @@ const CreateTournamentPopup = ({
     try {
       if (tournamentName && teamNames) {
         const teamsArray = teamNames.split(",").map((team) => team.trim());
+
         if (
           tournamentType === "knockout_quarter_final" &&
           teamsArray.length !== 8
@@ -43,13 +46,26 @@ const CreateTournamentPopup = ({
 
         setIsCreating(true);
 
+        // Step 1: Create the tournament
         const tournament = await createTournament({
           name: tournamentName,
           teams: teamsArray,
-          tournament_type: tournamentType,
-          created_by: user.id,
+          tournamentType,
+          createdBy: user.id,
         });
 
+        // Step 2: Generate matches for the created tournament
+        const matches = generateMatches(
+          teamsArray,
+          tournament.id,
+          tournamentType
+        );
+
+        console.log("Generated Match ", matches);
+        // Step 3: Insert the generated matches in bulk
+        await insertMatchesInBulk(matches);
+
+        // Step 4: Fetch the latest tournaments and update the state
         const tournamentsList = await getTournamentsFromSupabase();
         console.log("Tournament created with ID: ", {
           tournament,
@@ -63,6 +79,7 @@ const CreateTournamentPopup = ({
         );
         setSelectedTournament(newTournament);
 
+        // Step 5: Close the popup and reset the form fields
         onClose();
         setTournamentName("");
         setTeamNames("");

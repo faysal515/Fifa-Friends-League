@@ -1,22 +1,23 @@
 import supabase from "./supabaseClient";
+import { convertKeysToCamelCase, convertKeysToSnakeCase } from "./utils";
 
 export const createTournament = async ({
   name,
   teams,
-  tournament_type,
-  created_by,
+  tournamentType,
+  createdBy,
 }) => {
   const { data, error } = await supabase
     .from("tournaments")
     .insert([
-      {
+      convertKeysToSnakeCase({
         name,
-        tournament_type,
+        tournamentType,
         teams: teams,
         winner: null,
-        created_by,
-        created_at: new Date(),
-      },
+        createdBy,
+        createdAt: new Date(),
+      }),
     ])
     .select();
 
@@ -26,13 +27,15 @@ export const createTournament = async ({
   }
 
   console.log("Tournament created successfully:", data);
-  return data[0];
+  return convertKeysToCamelCase(data[0]);
 };
 
-export const getTournamentsFromSupabase = async () => {
+// Fetch tournaments with case conversion
+export const getTournamentsFromSupabase = async (createdBy) => {
   const { data, error } = await supabase
     .from("tournaments")
     .select("*")
+    .eq("created_by", createdBy)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -41,5 +44,39 @@ export const getTournamentsFromSupabase = async () => {
   }
 
   console.log("Tournaments fetched successfully:", data);
-  return data;
+  return data.map(convertKeysToCamelCase);
+};
+
+// Insert matches in bulk with case conversion
+export const insertMatchesInBulk = async (matches) => {
+  const matchesInSnakeCase = matches.map(convertKeysToSnakeCase);
+
+  const { data, error } = await supabase
+    .from("matches")
+    .insert(matchesInSnakeCase)
+    .select();
+
+  if (error) {
+    console.error("Error inserting matches:", error);
+    throw error;
+  }
+
+  console.log("Matches inserted successfully:", data);
+  return data.map(convertKeysToCamelCase);
+};
+
+export const getMatchesFromSupabase = async (tournamentId) => {
+  const { data, error } = await supabase
+    .from("matches")
+    .select("*")
+    .eq("tournament_id", tournamentId)
+    .order("match_day", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching matches:", error);
+    throw error;
+  }
+
+  console.log("Matches fetched successfully:", data);
+  return data.map(convertKeysToCamelCase);
 };

@@ -199,3 +199,29 @@ export const generateMatches = (teams, tournamentId, tournamentType) => {
       throw new Error(`Unsupported tournament type: ${tournamentType}`);
   }
 };
+
+// Convert camelCase to snake_case
+export const camelToSnake = (str) =>
+  str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+
+// Convert snake_case to camelCase
+export const snakeToCamel = (str) =>
+  str.replace(/_([a-z])/g, (group) => group[1].toUpperCase());
+
+// Convert object keys from camelCase to snake_case
+export const convertKeysToSnakeCase = (obj) => {
+  const newObj = {};
+  Object.keys(obj).forEach((key) => {
+    newObj[camelToSnake(key)] = obj[key];
+  });
+  return newObj;
+};
+
+// Convert object keys from snake_case to camelCase
+export const convertKeysToCamelCase = (obj) => {
+  const newObj = {};
+  Object.keys(obj).forEach((key) => {
+    newObj[snakeToCamel(key)] = obj[key];
+  });
+  return newObj;
+};
