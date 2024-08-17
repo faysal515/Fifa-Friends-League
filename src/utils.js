@@ -66,7 +66,6 @@ export const generateMatches = (teams, tournamentName) => {
     });
   }
 
-  // Generate Final match
   const finalMatchNumber = "Final";
   const finalist1 = `Winner of SF1`;
   const finalist2 = `Winner of SF2`;

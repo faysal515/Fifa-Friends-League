@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ShowPassword from "./show-pass.svg";
 import HidePassword from "./hide-pass.svg";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import supabase from "./supabaseClient"; // Import the Supabase client
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState("");
@@ -11,14 +11,14 @@ const Login = ({ onLogin }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const auth = getAuth();
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
-      );
-      onLogin(userCredential.user);
+        password,
+      });
+
+      if (error) throw error;
+      onLogin(data.user); // Pass the authenticated user to the parent component
     } catch (error) {
       setError(error.message);
     }
@@ -58,13 +58,13 @@ const Login = ({ onLogin }) => {
                 {showPassword ? (
                   <img
                     src={ShowPassword}
-                    alt="Tournament Icon"
+                    alt="Show Password"
                     className="w-5 h-5 mr-3 flex-shrink-0"
                   />
                 ) : (
                   <img
                     src={HidePassword}
-                    alt="Tournament Icon"
+                    alt="Hide Password"
                     className="w-5 h-5 mr-3 flex-shrink-0"
                   />
                 )}

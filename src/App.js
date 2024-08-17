@@ -131,7 +131,7 @@ const App = () => {
     setShowCreateTournamentPopup(true);
   };
 
-  const handleCreateTournamentSubmit = async () => {
+  /* const handleCreateTournamentSubmit = async () => {
     try {
       if (newTournamentName && newTeamNames) {
         const teamsArray = newTeamNames.split(",").map((team) => team.trim());
@@ -166,8 +166,9 @@ const App = () => {
       showNotification(error.message, "error");
     }
   };
+ */
 
-  const handleGenerateMatches = async (newTournamentName, teams) => {
+  /* const handleGenerateMatches = async (newTournamentName, teams) => {
     try {
       const generatedMatches = generateMatches(teams, newTournamentName);
       const sortedMatches = sortMatches(generatedMatches);
@@ -177,7 +178,7 @@ const App = () => {
     } catch (error) {
       showNotification(error.message, "error");
     }
-  };
+  }; */
 
   const handleSelectMatch = (match) => {
     setSelectedMatch(match);
@@ -415,11 +416,8 @@ const App = () => {
       <CreateTournamentPopup
         show={showCreateTournamentPopup}
         onClose={() => setShowCreateTournamentPopup(false)}
-        onSubmit={handleCreateTournamentSubmit}
-        tournamentName={newTournamentName}
-        setTournamentName={setNewTournamentName}
-        teamNames={newTeamNames}
-        setTeamNames={setNewTeamNames}
+        setTournaments={setTournaments}
+        setSelectedTournament={setSelectedTournament}
       />
 
       <UpdateScorePopup

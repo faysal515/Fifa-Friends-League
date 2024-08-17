@@ -1,20 +1,76 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  createTournament,
+  getTournamentsFromSupabase,
+} from "./supabaseFunctions";
+import supabase from "./supabaseClient";
 
 const CreateTournamentPopup = ({
   show,
   onClose,
-  onSubmit,
-  tournamentName,
-  setTournamentName,
-  teamNames,
-  setTeamNames,
+  setTournaments,
+  setSelectedTournament,
 }) => {
+  const [tournamentName, setTournamentName] = useState("");
+  const [teamNames, setTeamNames] = useState("");
+  const [tournamentType, setTournamentType] = useState("league");
   const [isCreating, setIsCreating] = useState(false);
+  const [user, setUser] = useState(null);
 
-  const handleSubmit = async () => {
-    setIsCreating(true);
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    fetchUser();
+  }, []);
+
+  const handleCreateTournament = async () => {
     try {
-      await onSubmit();
+      if (tournamentName && teamNames) {
+        const teamsArray = teamNames.split(",").map((team) => team.trim());
+        if (
+          tournamentType === "knockout_quarter_final" &&
+          teamsArray.length !== 8
+        ) {
+          throw new Error(
+            "There must be exactly 8 teams for knockout tournaments."
+          );
+        }
+
+        setIsCreating(true);
+
+        const tournamentId = await createTournament({
+          name: tournamentName,
+          teams: teamsArray,
+          tournament_type: tournamentType,
+          created_by: user.id,
+        });
+
+        const tournamentsList = await getTournamentsFromSupabase(); // Fetch the latest tournaments
+        console.log("Tournament created with ID: ", {
+          tournamentId,
+          tournamentsList,
+        });
+
+        // setTournaments(tournamentsList);
+
+        // const newTournament = tournamentsList.find(
+        //   (tournament) => tournament.id === tournamentId
+        // );
+        // setSelectedTournament(newTournament);
+
+        onClose(); // Close the popup after creation
+        setTournamentName("");
+        setTeamNames("");
+      } else {
+        alert("Please enter both a tournament name and team names.");
+      }
+    } catch (error) {
+      alert(error.message); // Replace with your notification system if available
     } finally {
       setIsCreating(false);
     }
@@ -53,6 +109,22 @@ const CreateTournamentPopup = ({
               disabled={isCreating}
             />
           </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Tournament Type
+            </label>
+            <select
+              value={tournamentType}
+              onChange={(e) => setTournamentType(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              disabled={isCreating}
+            >
+              <option value="league">League</option>
+              <option value="knockout_quarter_final">
+                Knockout (Quarter Final)
+              </option>
+            </select>
+          </div>
         </div>
         <div className="mt-6 flex justify-end space-x-3">
           <button
@@ -63,7 +135,7 @@ const CreateTournamentPopup = ({
             Cancel
           </button>
           <button
-            onClick={handleSubmit}
+            onClick={handleCreateTournament}
             className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               isCreating
                 ? "bg-blue-300 text-white cursor-not-allowed"
