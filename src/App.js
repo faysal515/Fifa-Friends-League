@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import Login from "./Login";
 import {
   generateMatches,
   sortMatches,
@@ -24,6 +26,7 @@ import Cup from "./cup.svg";
 import MatchTabs from "./MatchTab";
 
 const App = () => {
+  const [user, setUser] = useState(null); // State to track authenticated user
   const [tournaments, setTournaments] = useState([]);
   const [selectedTournament, setSelectedTournament] = useState(null);
   const [matches, setMatches] = useState([]);
@@ -48,33 +51,53 @@ const App = () => {
   };
 
   useEffect(() => {
-    const fetchTournaments = async () => {
-      try {
-        setLoadingTournaments(true);
-        const tournamentsList = await getTournamentsFromFirestore();
-        setTournaments(tournamentsList);
-
-        if (tournamentsList.length > 0) {
-          const lastTournament = tournamentsList[tournamentsList.length - 1];
-          setSelectedTournament(lastTournament);
-          setNoTournamentsFound(false);
-        } else {
-          setNoTournamentsFound(true);
-        }
-      } catch (error) {
-        showNotification(error.message, "error");
-      } finally {
-        setLoadingTournaments(false);
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+      } else {
+        setUser(null);
       }
-    };
-
-    fetchTournaments();
+    });
+    return () => unsubscribe();
   }, []);
 
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth);
+    setUser(null);
+  };
+
   useEffect(() => {
-    const fetchMatchesWithDelay = async () => {
-      try {
-        if (selectedTournament) {
+    if (user) {
+      const fetchTournaments = async () => {
+        try {
+          setLoadingTournaments(true);
+          const tournamentsList = await getTournamentsFromFirestore();
+          setTournaments(tournamentsList);
+
+          if (tournamentsList.length > 0) {
+            const lastTournament = tournamentsList[tournamentsList.length - 1];
+            setSelectedTournament(lastTournament);
+            setNoTournamentsFound(false);
+          } else {
+            setNoTournamentsFound(true);
+          }
+        } catch (error) {
+          showNotification(error.message, "error");
+        } finally {
+          setLoadingTournaments(false);
+        }
+      };
+
+      fetchTournaments();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedTournament && user) {
+      const fetchMatchesWithDelay = async () => {
+        try {
           setLoadingMatches(true);
           await new Promise((resolve) => setTimeout(resolve, 1500)); // Delay of 1.5 seconds
 
@@ -93,16 +116,16 @@ const App = () => {
           } else {
             setNoMatchesFound(true);
           }
+        } catch (error) {
+          showNotification(error.message, "error");
+        } finally {
+          setLoadingMatches(false);
         }
-      } catch (error) {
-        showNotification(error.message, "error");
-      } finally {
-        setLoadingMatches(false);
-      }
-    };
+      };
 
-    fetchMatchesWithDelay();
-  }, [selectedTournament]);
+      fetchMatchesWithDelay();
+    }
+  }, [selectedTournament, user]);
 
   const handleCreateTournament = () => {
     setShowCreateTournamentPopup(true);
@@ -122,11 +145,9 @@ const App = () => {
         );
         console.log("Tournament created with ID: ", tournamentId);
 
-        // Fetch the tournaments after creating the new one
         const tournamentsList = await getTournamentsFromFirestore();
         setTournaments(tournamentsList);
 
-        // Set the newly created tournament as the selected one
         const newTournament = tournamentsList.find(
           (tournament) => tournament.id === tournamentId
         );
@@ -135,8 +156,6 @@ const App = () => {
         setShowCreateTournamentPopup(false);
         setNewTournamentName("");
         setNewTeamNames("");
-
-        console.log("====== ", { newTournamentName, teamsArray });
       } else {
         showNotification(
           "Please enter both a tournament name and team names.",
@@ -193,7 +212,6 @@ const App = () => {
         setAwayScore("");
 
         if (selectedMatch.matchName.startsWith("QF")) {
-          // Check if all QF matches are finished to calculate semifinalists
           const qfMatches = sortedMatches.filter((match) =>
             match.matchName.startsWith("QF")
           );
@@ -208,7 +226,6 @@ const App = () => {
             await updateSemifinalTeams(teams, selectedTournament.name);
           }
         } else if (selectedMatch.matchName.startsWith("SF")) {
-          // Check if all SF matches are finished to calculate finalists
           const sfMatches = sortedMatches.filter((match) =>
             match.matchName.startsWith("SF")
           );
@@ -227,7 +244,6 @@ const App = () => {
             }
           }
         } else if (selectedMatch.matchName === "Final") {
-          // Update the tournament with the winner after the final match is updated
           const winner =
             homeScore > awayScore
               ? selectedMatch.homeTeam
@@ -298,6 +314,10 @@ const App = () => {
     );
   };
 
+  if (!user) {
+    return <Login onLogin={(user) => setUser(user)} />;
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center mb-4">
@@ -311,6 +331,15 @@ const App = () => {
       {notification && (
         <Notification message={notification.message} type={notification.type} />
       )}
+
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+        >
+          Logout
+        </button>
+      </div>
 
       <div className="flex flex-col md:flex-row">
         <div className="w-full md:w-1/4 pr-0 md:pr-4 mb-6 md:mb-0">
