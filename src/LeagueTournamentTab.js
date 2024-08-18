@@ -10,7 +10,7 @@ const LeagueTournamentTab = ({ matches, renderMatchCard, teams }) => {
 
     console.log(">> computing > ", { teams, matches });
 
-    const updatedStandings = computeStandings(matches, teams);
+    const updatedStandings = computeStandings(matches);
     setStandings(updatedStandings);
   }, [teams, matches]);
 

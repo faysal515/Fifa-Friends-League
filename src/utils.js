@@ -33,28 +33,62 @@ export const calculateSemiFinalists = (matches) => {
       continue;
     }
 
-    let winner = null;
-    let totalHomeGoals = 0;
-    let totalAwayGoals = 0;
+    // Assigning teamOne and teamTwo based on the first match
+    const teamOne = qfMatches[0].homeTeam;
+    const teamTwo = qfMatches[0].awayTeam;
+
+    let teamOneTotalGoals = 0;
+    let teamTwoTotalGoals = 0;
+    let teamOneAwayGoals = 0;
+    let teamTwoAwayGoals = 0;
 
     qfMatches.forEach((match) => {
-      const [homeGoals, awayGoals] = match.result.split("-").map(Number);
-      if (match.homeTeam === qfMatches[0].homeTeam) {
-        totalHomeGoals += homeGoals;
-        totalAwayGoals += awayGoals;
+      const { homeTeam, awayTeam, homeScore, awayScore } = match;
+
+      // Ensure scores are numbers
+      const homeScoreNum = Number(homeScore);
+      const awayScoreNum = Number(awayScore);
+
+      if (homeTeam === teamOne) {
+        teamOneTotalGoals += homeScoreNum;
+        teamTwoTotalGoals += awayScoreNum;
+        teamTwoAwayGoals += awayScoreNum;
       } else {
-        totalHomeGoals += awayGoals;
-        totalAwayGoals += homeGoals;
+        teamOneTotalGoals += awayScoreNum;
+        teamTwoTotalGoals += homeScoreNum;
+        teamOneAwayGoals += awayScoreNum; // Changed from homeScoreNum to awayScoreNum
       }
     });
 
-    if (totalHomeGoals > totalAwayGoals) {
-      winner = qfMatches[0].homeTeam;
-    } else if (totalAwayGoals > totalHomeGoals) {
-      winner = qfMatches[0].awayTeam;
+    let winner;
+    if (teamOneTotalGoals > teamTwoTotalGoals) {
+      winner = teamOne;
+      console.log(
+        `QF${i}: ${teamOne} wins with total goals ${teamOneTotalGoals} vs ${teamTwoTotalGoals}`
+      );
+    } else if (teamTwoTotalGoals > teamOneTotalGoals) {
+      winner = teamTwo;
+      console.log(
+        `QF${i}: ${teamTwo} wins with total goals ${teamTwoTotalGoals} vs ${teamOneTotalGoals}`
+      );
     } else {
-      console.warn(`Tie in QF${i}. Implement tie-breaker.`);
-      winner = "TBD";
+      // If total goals are equal, apply the away goals rule
+      if (teamTwoAwayGoals > teamOneAwayGoals) {
+        winner = teamTwo;
+        console.log(
+          `QF${i}: ${teamTwo} wins with more away goals (${teamTwoAwayGoals} vs ${teamOneAwayGoals})`
+        );
+      } else if (teamOneAwayGoals > teamTwoAwayGoals) {
+        winner = teamOne;
+        console.log(
+          `QF${i}: ${teamOne} wins with more away goals (${teamOneAwayGoals} vs ${teamTwoAwayGoals})`
+        );
+      } else {
+        console.warn(
+          `QF${i}: Tie between ${teamOne} and ${teamTwo}. Implement tie-breaker.`
+        );
+        winner = "TBD"; // Mark as TBD or implement further tie-breaker logic
+      }
     }
 
     semiFinalists.push(winner);
@@ -79,28 +113,60 @@ export const calculateFinalists = (matches) => {
       continue;
     }
 
-    let totalHomeGoals = 0;
-    let totalAwayGoals = 0;
+    // Assigning teamOne and teamTwo based on the first match
+    const teamOne = sfMatches[0].homeTeam;
+    const teamTwo = sfMatches[0].awayTeam;
+
+    let teamOneTotalGoals = 0;
+    let teamTwoTotalGoals = 0;
+    let teamOneAwayGoals = 0;
+    let teamTwoAwayGoals = 0;
 
     sfMatches.forEach((match) => {
-      const [homeGoals, awayGoals] = match.result.split("-").map(Number);
-      if (match.homeTeam === sfMatches[0].homeTeam) {
-        totalHomeGoals += homeGoals;
-        totalAwayGoals += awayGoals;
+      const { homeTeam, awayTeam, homeScore, awayScore } = match;
+
+      // Ensure scores are numbers
+      const homeScoreNum = Number(homeScore);
+      const awayScoreNum = Number(awayScore);
+
+      if (homeTeam === teamOne) {
+        teamOneTotalGoals += homeScoreNum;
+        teamTwoTotalGoals += awayScoreNum;
+        teamTwoAwayGoals += awayScoreNum; // Away goals for teamTwo
       } else {
-        totalHomeGoals += awayGoals;
-        totalAwayGoals += homeGoals;
+        teamOneTotalGoals += awayScoreNum;
+        teamTwoTotalGoals += homeScoreNum;
+        teamOneAwayGoals += awayScoreNum; // Away goals for teamOne
       }
     });
 
-    let winner = null;
-
-    if (totalHomeGoals > totalAwayGoals) {
-      winner = sfMatches[0].homeTeam;
-    } else if (totalAwayGoals > totalHomeGoals) {
-      winner = sfMatches[0].awayTeam;
+    let winner;
+    if (teamOneTotalGoals > teamTwoTotalGoals) {
+      winner = teamOne;
+      console.log(
+        `SF${i}: ${teamOne} wins with total goals ${teamOneTotalGoals} vs ${teamTwoTotalGoals}`
+      );
+    } else if (teamTwoTotalGoals > teamOneTotalGoals) {
+      winner = teamTwo;
+      console.log(
+        `SF${i}: ${teamTwo} wins with total goals ${teamTwoTotalGoals} vs ${teamOneTotalGoals}`
+      );
     } else {
-      throw new Error(`Tie in SF${i}. A tie-breaker must be implemented.`);
+      // If total goals are equal, apply the away goals rule
+      if (teamTwoAwayGoals > teamOneAwayGoals) {
+        winner = teamTwo;
+        console.log(
+          `SF${i}: ${teamTwo} wins with more away goals (${teamTwoAwayGoals} vs ${teamOneAwayGoals})`
+        );
+      } else if (teamOneAwayGoals > teamTwoAwayGoals) {
+        winner = teamOne;
+        console.log(
+          `SF${i}: ${teamOne} wins with more away goals (${teamOneAwayGoals} vs ${teamTwoAwayGoals})`
+        );
+      } else {
+        console.warn(`Tie in SF${i}. Implement tie-breaker.`);
+        winner = "TBD"; // Mark as TBD or implement further tie-breaker logic
+      }
     }
 
     finalists.push(winner);
@@ -251,24 +317,45 @@ export const convertKeysToCamelCase = (obj) => {
   return newObj;
 };
 
-export const computeStandings = (matches, teams) => {
-  if (!teams || !matches) return [];
+export const computeStandings = (matches) => {
+  if (!matches) return [];
+
   const standingsMap = {};
 
-  // Initialize standings for each team
-  teams.forEach((team) => {
-    standingsMap[team] = {
-      team,
-      played: 0,
-      won: 0,
-      drawn: 0,
-      lost: 0,
-      gf: 0, // Goals For
-      ga: 0, // Goals Against
-      gd: 0, // Goal Difference
-      points: 0,
-    };
+  // Extract unique teams from matches
+  matches.forEach((match) => {
+    const { homeTeam, awayTeam } = match;
+
+    if (!standingsMap[homeTeam]) {
+      standingsMap[homeTeam] = {
+        team: homeTeam,
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        gf: 0, // Goals For
+        ga: 0, // Goals Against
+        gd: 0, // Goal Difference
+        points: 0,
+      };
+    }
+
+    if (!standingsMap[awayTeam]) {
+      standingsMap[awayTeam] = {
+        team: awayTeam,
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        gf: 0, // Goals For
+        ga: 0, // Goals Against
+        gd: 0, // Goal Difference
+        points: 0,
+      };
+    }
   });
+
+  console.log("compute: ", { matches, standingsMap });
 
   // Calculate the statistics based on matches that have been played
   matches.forEach((match) => {
@@ -368,18 +455,16 @@ export const handleKnockoutScoreUpdate = async ({
       const teams = calculateFinalists(matches);
       await updateFinalTeams(teams, selectedTournament.id);
     }
-  }
-
-  // Handle Final
-  else if (selectedMatch.matchName === "Final") {
+  } else if (selectedMatch.matchName === "Final") {
     const winner =
       homeScore > awayScore ? selectedMatch.homeTeam : selectedMatch.awayTeam;
     await updateTournament(selectedTournament.id, winner);
   }
 };
 
-// const handleLeagueScoreUpdate = async (selectedMatch, updatedMatches, sortedMatches) => {
-//   // Simply update standings, no further progression logic needed
-//   const standings = computeStandings(sortedMatches);
-
-// };
+export const handleLeagueScoreUpdate = async (tournamentId, matches, teams) => {
+  const standings = computeStandings(matches);
+  const winner = standings[0];
+  console.log("Wnner ", winner);
+  await updateTournament(tournamentId, winner.team);
+};
