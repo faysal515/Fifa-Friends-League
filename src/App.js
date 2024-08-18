@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import supabase from "./supabaseClient";
 
 import Login from "./Login";
-import { sortMatches, handleKnockoutScoreUpdate } from "./utils";
+import {
+  sortMatches,
+  handleKnockoutScoreUpdate,
+  handleLeagueScoreUpdate,
+} from "./utils";
 import CreateTournamentPopup from "./CreateTournament";
 import UpdateScorePopup from "./UpdateScore";
 import Notification from "./Notification";
@@ -181,8 +185,23 @@ const App = () => {
             awayScore,
           });
         } else if (selectedTournament.tournamentType === "league") {
-          // Additional logic for league type tournaments, if necessary
-          console.log("League match updated, standings will be recalculated.");
+          const allMatchFinished = updatedMatches.every(
+            (m) => m.completedAt !== null
+          );
+          if (allMatchFinished) {
+            console.log(
+              "Every match finished for tournament. calculating winner",
+              selectedTournament.id,
+              updatedMatches,
+              selectedTournament.teams
+            );
+            await handleLeagueScoreUpdate(
+              selectedTournament.id,
+              updatedMatches,
+              selectedTournament.teams
+            );
+            showNotification("Tournament updated with winner");
+          }
         }
       }
     } catch (error) {

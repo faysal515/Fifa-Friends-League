@@ -26,7 +26,6 @@ export const createTournament = async ({
     throw error;
   }
 
-  console.log("Tournament created successfully:", data);
   return convertKeysToCamelCase(data[0]);
 };
 
@@ -172,11 +171,10 @@ export const updateTournament = async (tournamentId, winner) => {
     .update(
       convertKeysToSnakeCase({
         winner,
-        completedAt: new Date(),
+        updatedAt: new Date(),
       })
     )
-    .eq("id", tournamentId)
-    .select();
+    .eq("id", tournamentId);
 
   if (error) {
     console.error("Error updating tournament:", error);
@@ -184,10 +182,8 @@ export const updateTournament = async (tournamentId, winner) => {
   }
 
   console.log(
-    `Tournament '${tournamentId}' updated successfully with winner '${winner}':`,
-    data
+    `Tournament '${tournamentId}' updated successfully with winner '${winner}':`
   );
-  return convertKeysToCamelCase(data[0]);
 };
 
 export const setMatchResult = async ({

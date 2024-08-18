@@ -8,6 +8,8 @@ const LeagueTournamentTab = ({ matches, renderMatchCard, teams }) => {
   useEffect(() => {
     if (!teams || !matches || teams.length === 0) return;
 
+    console.log(">> computing > ", { teams, matches });
+
     const updatedStandings = computeStandings(matches, teams);
     setStandings(updatedStandings);
   }, [teams, matches]);

@@ -31,53 +31,79 @@ const CreateTournamentPopup = ({
     fetchUser();
   }, []);
 
+  const validateTournamentInput = (
+    tournamentName,
+    teamNames,
+    tournamentType
+  ) => {
+    if (!tournamentName.trim()) {
+      return "Tournament name cannot be empty.";
+    }
+
+    const teamsArray = teamNames.split(",").map((team) => team.trim());
+
+    if (teamsArray.some((team) => !team)) {
+      return "No team name can be empty.";
+    }
+
+    if (tournamentType === "league" && teamsArray.length < 2) {
+      return "There must be at least 2 teams for league tournaments.";
+    }
+
+    if (
+      tournamentType === "knockout_quarter_final" &&
+      teamsArray.length !== 8
+    ) {
+      return "There must be exactly 8 teams for knockout tournaments.";
+    }
+
+    return null;
+  };
+
   const handleCreateTournament = async () => {
     try {
-      if (tournamentName && teamNames) {
-        const teamsArray = teamNames.split(",").map((team) => team.trim());
+      const validationError = validateTournamentInput(
+        tournamentName,
+        teamNames,
+        tournamentType
+      );
 
-        if (
-          tournamentType === "knockout_quarter_final" &&
-          teamsArray.length !== 8
-        ) {
-          throw new Error(
-            "There must be exactly 8 teams for knockout tournaments."
-          );
-        }
-
-        setIsCreating(true);
-
-        const tournament = await createTournament({
-          name: tournamentName,
-          teams: teamsArray,
-          tournamentType,
-          createdBy: user.id,
-        });
-
-        const matches = generateMatches(
-          teamsArray,
-          tournament.id,
-          tournamentType
-        );
-
-        await insertMatchesInBulk(matches);
-
-        const tournamentsList = await getTournamentsFromSupabase(user.id);
-
-        setTournaments(tournamentsList);
-
-        const newTournament = tournamentsList.find(
-          (t) => t.id === tournament.id
-        );
-        setSelectedTournament(newTournament);
-
-        onClose();
-        setTournamentName("");
-        setTeamNames("");
-        setErrorMessage("");
-      } else {
-        setErrorMessage("Please enter both a tournament name and team names.");
+      if (validationError) {
+        setErrorMessage(validationError);
+        return;
       }
+
+      const teamsArray = teamNames.split(",").map((team) => team.trim());
+
+      setIsCreating(true);
+
+      const tournament = await createTournament({
+        name: tournamentName,
+        teams: teamsArray,
+        tournamentType,
+        createdBy: user.id,
+      });
+
+      const matches = generateMatches(
+        teamsArray,
+        tournament.id,
+        tournamentType
+      );
+
+      await insertMatchesInBulk(matches);
+
+      const tournamentsList = await getTournamentsFromSupabase(user.id);
+      console.log("Tounament found ", tournamentsList, user);
+
+      setTournaments(tournamentsList);
+
+      const newTournament = tournamentsList.find((t) => t.id === tournament.id);
+      setSelectedTournament(newTournament);
+
+      onClose();
+      setTournamentName("");
+      setTeamNames("");
+      setErrorMessage("");
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
