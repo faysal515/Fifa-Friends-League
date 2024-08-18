@@ -1,22 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import supabase from "./supabaseClient";
+
 import Login from "./Login";
-import {
-  generateMatches,
-  sortMatches,
-  calculateSemiFinalists,
-  calculateFinalists,
-} from "./utils";
-import {
-  saveMatchesToFirestore,
-  setMatchResult,
-  getMatchesFromFirestore,
-  updateSemifinalTeams,
-  updateFinalTeams,
-  createTournament,
-  getTournamentsFromFirestore,
-  updateTournament,
-} from "./firestoreFunctions";
+import { sortMatches, handleKnockoutScoreUpdate } from "./utils";
 import CreateTournamentPopup from "./CreateTournament";
 import UpdateScorePopup from "./UpdateScore";
 import Notification from "./Notification";
@@ -27,7 +13,9 @@ import MatchTabs from "./MatchTab";
 import {
   getMatchesFromSupabase,
   getTournamentsFromSupabase,
+  setMatchResult,
 } from "./supabaseFunctions";
+import LeagueTournamentTab from "./LeagueTournamentTab";
 
 const App = () => {
   const [user, setUser] = useState(null); // State to track authenticated user
@@ -39,8 +27,6 @@ const App = () => {
   const [awayScore, setAwayScore] = useState("");
   const [showCreateTournamentPopup, setShowCreateTournamentPopup] =
     useState(false);
-  const [newTournamentName, setNewTournamentName] = useState("");
-  const [newTeamNames, setNewTeamNames] = useState("");
   const [notification, setNotification] = useState(null);
   const [loadingTournaments, setLoadingTournaments] = useState(false);
   const [loadingMatches, setLoadingMatches] = useState(false);
@@ -55,20 +41,35 @@ const App = () => {
   };
 
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-      } else {
-        setUser(null);
+    // Listening to auth state changes
+    const { subscription } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+        }
       }
-    });
-    return () => unsubscribe();
+    );
+
+    // Fetch the user session on initial load
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    fetchUser();
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
-    const auth = getAuth();
-    await signOut(auth);
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Error logging out:", error);
     setUser(null);
   };
 
@@ -78,7 +79,6 @@ const App = () => {
         try {
           setLoadingTournaments(true);
           const tournamentsList = await getTournamentsFromSupabase(user.id);
-          console.log("fetch tourn ", tournamentsList);
           setTournaments(tournamentsList);
 
           if (tournamentsList.length > 0) {
@@ -109,10 +109,8 @@ const App = () => {
           const fetchedMatches = await getMatchesFromSupabase(
             selectedTournament.id
           );
-          console.log("Fetched matches: ", fetchedMatches);
 
           const sortedMatches = sortMatches(fetchedMatches);
-          console.log("Sorted matches: ", sortedMatches);
 
           setMatches(sortedMatches);
 
@@ -136,55 +134,6 @@ const App = () => {
     setShowCreateTournamentPopup(true);
   };
 
-  /* const handleCreateTournamentSubmit = async () => {
-    try {
-      if (newTournamentName && newTeamNames) {
-        const teamsArray = newTeamNames.split(",").map((team) => team.trim());
-        if (teamsArray.length !== 8) {
-          throw new Error("There must be exactly 8 teams.");
-        }
-        await handleGenerateMatches(newTournamentName, teamsArray);
-        const tournamentId = await createTournament(
-          newTournamentName,
-          teamsArray
-        );
-        console.log("Tournament created with ID: ", tournamentId);
-
-        const tournamentsList = await getTournamentsFromFirestore();
-        setTournaments(tournamentsList);
-
-        const newTournament = tournamentsList.find(
-          (tournament) => tournament.id === tournamentId
-        );
-        setSelectedTournament(newTournament);
-
-        setShowCreateTournamentPopup(false);
-        setNewTournamentName("");
-        setNewTeamNames("");
-      } else {
-        showNotification(
-          "Please enter both a tournament name and team names.",
-          "error"
-        );
-      }
-    } catch (error) {
-      showNotification(error.message, "error");
-    }
-  };
- */
-
-  /* const handleGenerateMatches = async (newTournamentName, teams) => {
-    try {
-      const generatedMatches = generateMatches(teams, newTournamentName);
-      const sortedMatches = sortMatches(generatedMatches);
-      console.log("==== ", sortedMatches);
-      setMatches(sortedMatches);
-      await saveMatchesToFirestore(sortedMatches);
-    } catch (error) {
-      showNotification(error.message, "error");
-    }
-  }; */
-
   const handleSelectMatch = (match) => {
     setSelectedMatch(match);
     setHomeScore("");
@@ -194,21 +143,26 @@ const App = () => {
   const handleUpdateScore = async () => {
     try {
       if (selectedMatch && homeScore !== "" && awayScore !== "") {
-        const result = `${homeScore}-${awayScore}`;
+        const completedAt = new Date().toISOString();
         console.log(
           "updating score for ",
           selectedMatch.matchDay,
           selectedMatch.matchName
         );
 
-        await setMatchResult(
-          selectedMatch.matchDay,
-          result,
-          selectedTournament.name
-        );
+        // Update the match result in the database
+        await setMatchResult({
+          matchId: selectedMatch.id,
+          homeScore: Number(homeScore),
+          awayScore: Number(awayScore),
+          completedAt,
+        });
 
+        // Update the match result in the local state
         const updatedMatches = matches.map((match) =>
-          match.id === selectedMatch.id ? { ...match, result } : match
+          match.id === selectedMatch.id
+            ? { ...match, homeScore, awayScore, completedAt }
+            : match
         );
 
         const sortedMatches = sortMatches(updatedMatches);
@@ -217,47 +171,18 @@ const App = () => {
         setHomeScore("");
         setAwayScore("");
 
-        if (selectedMatch.matchName.startsWith("QF")) {
-          const qfMatches = sortedMatches.filter((match) =>
-            match.matchName.startsWith("QF")
-          );
-          const allQfFinished = qfMatches.every((match) => match.result);
-          console.log("QF status ", { qfMatches, allQfFinished });
-
-          if (allQfFinished) {
-            console.log(
-              "All QF finished, calculating and updating semifinalist..."
-            );
-            const teams = calculateSemiFinalists(sortedMatches);
-            await updateSemifinalTeams(teams, selectedTournament.name);
-          }
-        } else if (selectedMatch.matchName.startsWith("SF")) {
-          const sfMatches = sortedMatches.filter((match) =>
-            match.matchName.startsWith("SF")
-          );
-          const allSfFinished = sfMatches.every((match) => match.result);
-          console.log("SF status ", { sfMatches, allSfFinished });
-
-          if (allSfFinished) {
-            try {
-              console.log(
-                "All SF finished, calculating and updating finalists..."
-              );
-              const teams = calculateFinalists(sortedMatches);
-              await updateFinalTeams(teams, selectedTournament.name);
-            } catch (error) {
-              console.error("Error calculating finalists:", error);
-            }
-          }
-        } else if (selectedMatch.matchName === "Final") {
-          const winner =
-            homeScore > awayScore
-              ? selectedMatch.homeTeam
-              : selectedMatch.awayTeam;
-          await updateTournament(selectedTournament.name, winner);
-          console.log(
-            `Tournament '${selectedTournament.name}' updated with winner '${winner}'.`
-          );
+        // Handle post-match updates based on tournament type
+        if (selectedTournament.tournamentType === "knockout_quarter_final") {
+          await handleKnockoutScoreUpdate({
+            selectedTournament,
+            selectedMatch,
+            matches: sortedMatches,
+            homeScore,
+            awayScore,
+          });
+        } else if (selectedTournament.tournamentType === "league") {
+          // Additional logic for league type tournaments, if necessary
+          console.log("League match updated, standings will be recalculated.");
         }
       }
     } catch (error) {
@@ -284,8 +209,10 @@ const App = () => {
             </span>
           </div>
           <div className="flex flex-col items-center">
-            {match.result ? (
-              <div className="text-3xl font-bold">{match.result}</div>
+            {match.completedAt ? (
+              <div className="text-3xl font-bold">
+                {match.homeScore} - {match.awayScore}
+              </div>
             ) : (
               <span className="text-lg">vs</span>
             )}
@@ -303,17 +230,17 @@ const App = () => {
           <button
             onClick={() => handleSelectMatch(match)}
             className={`${
-              match.result
+              match.completedAt
                 ? "bg-transparent text-gray-700 font-semibold py-2 px-4"
                 : "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-full"
             }`}
             style={
-              match.result
+              match.completedAt
                 ? { textDecoration: "underline", cursor: "pointer" }
                 : {}
             }
           >
-            {match.result ? "Update Score" : "Save Score"}
+            {match.completedAt ? "Update Score" : "Save Score"}
           </button>
         </div>
       </div>
@@ -407,10 +334,18 @@ const App = () => {
                 </h2>
 
                 <div className="grid">
-                  <MatchTabs
-                    matches={matches}
-                    renderMatchCard={renderMatchCard}
-                  />
+                  {selectedTournament?.tournamentType === "league" ? (
+                    <LeagueTournamentTab
+                      matches={matches}
+                      renderMatchCard={renderMatchCard}
+                      teams={selectedTournament?.teams}
+                    />
+                  ) : (
+                    <MatchTabs
+                      matches={matches}
+                      renderMatchCard={renderMatchCard}
+                    />
+                  )}
                 </div>
               </div>
             )

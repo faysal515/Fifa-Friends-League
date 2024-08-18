@@ -18,6 +18,7 @@ const CreateTournamentPopup = ({
   const [tournamentType, setTournamentType] = useState("league");
   const [isCreating, setIsCreating] = useState(false);
   const [user, setUser] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -46,7 +47,6 @@ const CreateTournamentPopup = ({
 
         setIsCreating(true);
 
-        // Step 1: Create the tournament
         const tournament = await createTournament({
           name: tournamentName,
           teams: teamsArray,
@@ -54,23 +54,15 @@ const CreateTournamentPopup = ({
           createdBy: user.id,
         });
 
-        // Step 2: Generate matches for the created tournament
         const matches = generateMatches(
           teamsArray,
           tournament.id,
           tournamentType
         );
 
-        console.log("Generated Match ", matches);
-        // Step 3: Insert the generated matches in bulk
         await insertMatchesInBulk(matches);
 
-        // Step 4: Fetch the latest tournaments and update the state
-        const tournamentsList = await getTournamentsFromSupabase();
-        console.log("Tournament created with ID: ", {
-          tournament,
-          tournamentsList,
-        });
+        const tournamentsList = await getTournamentsFromSupabase(user.id);
 
         setTournaments(tournamentsList);
 
@@ -79,17 +71,23 @@ const CreateTournamentPopup = ({
         );
         setSelectedTournament(newTournament);
 
-        // Step 5: Close the popup and reset the form fields
         onClose();
         setTournamentName("");
         setTeamNames("");
+        setErrorMessage("");
       } else {
-        alert("Please enter both a tournament name and team names.");
+        setErrorMessage("Please enter both a tournament name and team names.");
       }
     } catch (error) {
-      alert(error.message); // Replace with your notification system if available
+      setErrorMessage(error.message);
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleInputChange = () => {
+    if (errorMessage) {
+      setErrorMessage("");
     }
   };
 
@@ -101,6 +99,9 @@ const CreateTournamentPopup = ({
         <h3 className="text-xl font-semibold text-gray-900 mb-4">
           Create New Tournament
         </h3>
+        {errorMessage && (
+          <div className="mb-4 text-red-500 text-sm">{errorMessage}</div>
+        )}
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-gray-700">
@@ -109,7 +110,10 @@ const CreateTournamentPopup = ({
             <input
               type="text"
               value={tournamentName}
-              onChange={(e) => setTournamentName(e.target.value)}
+              onChange={(e) => {
+                setTournamentName(e.target.value);
+                handleInputChange();
+              }}
               className="w-full p-2 border rounded-md"
               disabled={isCreating}
             />
@@ -121,7 +125,10 @@ const CreateTournamentPopup = ({
             <input
               type="text"
               value={teamNames}
-              onChange={(e) => setTeamNames(e.target.value)}
+              onChange={(e) => {
+                setTeamNames(e.target.value);
+                handleInputChange();
+              }}
               className="w-full p-2 border rounded-md"
               disabled={isCreating}
             />
@@ -132,7 +139,10 @@ const CreateTournamentPopup = ({
             </label>
             <select
               value={tournamentType}
-              onChange={(e) => setTournamentType(e.target.value)}
+              onChange={(e) => {
+                setTournamentType(e.target.value);
+                handleInputChange();
+              }}
               className="w-full p-2 border rounded-md"
               disabled={isCreating}
             >

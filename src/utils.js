@@ -1,3 +1,9 @@
+import {
+  updateFinalTeams,
+  updateSemifinalTeams,
+  updateTournament,
+} from "./supabaseFunctions";
+
 // src/utils.js
 export const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
@@ -136,7 +142,7 @@ const generateLeagueMatches = (teams, tournamentId) => {
 
 const generateKnockoutMatches = (teams, tournamentId) => {
   if (teams.length !== 8) {
-    throw new Error("There must be exactly 8 teams for a knockout tournament.");
+    throw new Error("There must be exactly 8 teams.");
   }
 
   const matchResults = [];
@@ -154,15 +160,27 @@ const generateKnockoutMatches = (teams, tournamentId) => {
       matchDay,
       tournamentId,
     });
+
+    ++matchDay;
+    matchResults.push({
+      matchName,
+      homeTeam: shuffledTeams[i * 2 + 1],
+      awayTeam: shuffledTeams[i * 2],
+      matchDay,
+      tournamentId,
+    });
   }
 
   // Generate Semi-Final matches
+  // Generate Semi-Final matches
   const semiFinalists = [];
   for (let i = 0; i < 2; i++) {
+    // Changed from 4 to 2
     const matchName = `SF${i + 1}`;
     const winner1 = `Winner of QF${i * 2 + 1}`;
     const winner2 = `Winner of QF${i * 2 + 2}`;
-    semiFinalists.push(winner1, winner2);
+    semiFinalists.push(winner1);
+    semiFinalists.push(winner2);
     ++matchDay;
     matchResults.push({
       matchName,
@@ -171,22 +189,29 @@ const generateKnockoutMatches = (teams, tournamentId) => {
       matchDay,
       tournamentId,
     });
+    ++matchDay;
+    matchResults.push({
+      matchName,
+      homeTeam: winner2,
+      awayTeam: winner1,
+      matchDay,
+      tournamentId,
+    });
   }
 
   // Generate Final match
-  const finalMatchName = "Final";
-  const finalist1 = "Winner of SF1";
-  const finalist2 = "Winner of SF2";
-  ++matchDay;
+  const finalMatchNumber = "Final";
+  const finalist1 = `Winner of SF1`;
+  const finalist2 = `Winner of SF2`;
   matchResults.push({
-    matchName: finalMatchName,
+    matchName: finalMatchNumber,
     homeTeam: finalist1,
     awayTeam: finalist2,
-    matchDay,
+    matchDay: matchDay + 1,
     tournamentId,
   });
 
-  return matchResults;
+  return sortMatches(matchResults);
 };
 
 export const generateMatches = (teams, tournamentId, tournamentType) => {
@@ -225,3 +250,136 @@ export const convertKeysToCamelCase = (obj) => {
   });
   return newObj;
 };
+
+export const computeStandings = (matches, teams) => {
+  if (!teams || !matches) return [];
+  const standingsMap = {};
+
+  // Initialize standings for each team
+  teams.forEach((team) => {
+    standingsMap[team] = {
+      team,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      gf: 0, // Goals For
+      ga: 0, // Goals Against
+      gd: 0, // Goal Difference
+      points: 0,
+    };
+  });
+
+  // Calculate the statistics based on matches that have been played
+  matches.forEach((match) => {
+    const { homeTeam, awayTeam, homeScore, awayScore } = match;
+
+    if (homeScore !== null && awayScore !== null) {
+      // Increment played matches
+      standingsMap[homeTeam].played += 1;
+      standingsMap[awayTeam].played += 1;
+
+      // Update goals for and against
+      standingsMap[homeTeam].gf += homeScore;
+      standingsMap[awayTeam].gf += awayScore;
+
+      standingsMap[homeTeam].ga += awayScore;
+      standingsMap[awayTeam].ga += homeScore;
+
+      // Update goal difference
+      standingsMap[homeTeam].gd =
+        standingsMap[homeTeam].gf - standingsMap[homeTeam].ga;
+      standingsMap[awayTeam].gd =
+        standingsMap[awayTeam].gf - standingsMap[awayTeam].ga;
+
+      // Update win, draw, loss, and points
+      if (homeScore > awayScore) {
+        standingsMap[homeTeam].won += 1;
+        standingsMap[awayTeam].lost += 1;
+        standingsMap[homeTeam].points += 3;
+      } else if (awayScore > homeScore) {
+        standingsMap[awayTeam].won += 1;
+        standingsMap[homeTeam].lost += 1;
+        standingsMap[awayTeam].points += 3;
+      } else {
+        standingsMap[homeTeam].drawn += 1;
+        standingsMap[awayTeam].drawn += 1;
+        standingsMap[homeTeam].points += 1;
+        standingsMap[awayTeam].points += 1;
+      }
+    }
+  });
+
+  // Convert standingsMap to array and sort alphabetically by team name
+  const standingsArray = Object.values(standingsMap).sort((a, b) =>
+    a.team.localeCompare(b.team)
+  );
+
+  // If any team has played matches, sort by points and then by goal difference
+  if (
+    matches.some(
+      (match) => match.homeScore !== null && match.awayScore !== null
+    )
+  ) {
+    standingsArray.sort(
+      (a, b) =>
+        b.points - a.points ||
+        b.gd - a.gd ||
+        b.gf - a.gf ||
+        a.team.localeCompare(b.team)
+    );
+  }
+
+  return standingsArray;
+};
+
+export const handleKnockoutScoreUpdate = async ({
+  selectedTournament,
+  selectedMatch,
+  matches,
+  homeScore,
+  awayScore,
+}) => {
+  // Handle Quarter Finals
+  if (selectedMatch.matchName.startsWith("QF")) {
+    const qfMatches = matches.filter((match) =>
+      match.matchName.startsWith("QF")
+    );
+    const allQfFinished = qfMatches.every(
+      (match) => match.completedAt !== null
+    );
+
+    if (allQfFinished) {
+      const teams = calculateSemiFinalists(matches);
+      await updateSemifinalTeams(teams, selectedTournament.id);
+    }
+  }
+
+  // Handle Semi Finals
+  else if (selectedMatch.matchName.startsWith("SF")) {
+    const sfMatches = matches.filter((match) =>
+      match.matchName.startsWith("SF")
+    );
+    const allSfFinished = sfMatches.every(
+      (match) => match.completedAt !== null
+    );
+
+    if (allSfFinished) {
+      const teams = calculateFinalists(matches);
+      await updateFinalTeams(teams, selectedTournament.id);
+    }
+  }
+
+  // Handle Final
+  else if (selectedMatch.matchName === "Final") {
+    const winner =
+      homeScore > awayScore ? selectedMatch.homeTeam : selectedMatch.awayTeam;
+    await updateTournament(selectedTournament.id, winner);
+  }
+};
+
+// const handleLeagueScoreUpdate = async (selectedMatch, updatedMatches, sortedMatches) => {
+//   // Simply update standings, no further progression logic needed
+//   const standings = computeStandings(sortedMatches);
+
+// };
