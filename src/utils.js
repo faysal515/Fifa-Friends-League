@@ -87,7 +87,9 @@ export const calculateSemiFinalists = (matches) => {
         console.warn(
           `QF${i}: Tie between ${teamOne} and ${teamTwo}. Implement tie-breaker.`
         );
-        winner = "TBD"; // Mark as TBD or implement further tie-breaker logic
+        throw new Error(
+          `QF${i}: Tie between ${teamOne} and ${teamTwo}. play again and put new score`
+        );
       }
     }
 
@@ -164,8 +166,12 @@ export const calculateFinalists = (matches) => {
           `SF${i}: ${teamOne} wins with more away goals (${teamOneAwayGoals} vs ${teamTwoAwayGoals})`
         );
       } else {
-        console.warn(`Tie in SF${i}. Implement tie-breaker.`);
-        winner = "TBD"; // Mark as TBD or implement further tie-breaker logic
+        console.warn(
+          `SF${i}: Tie between ${teamOne} and ${teamTwo}. play again and put new score`
+        );
+        throw new Error(
+          `SF${i}: Tie between ${teamOne} and ${teamTwo}. play again and put new score`
+        );
       }
     }
 

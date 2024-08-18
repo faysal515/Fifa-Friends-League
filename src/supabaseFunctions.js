@@ -83,51 +83,51 @@ export const updateSemifinalTeams = async (teams, tournamentId) => {
     .from("matches")
     .select("*")
     .eq("tournament_id", tournamentId)
-    .like("match_name", "SF%"); // Ensure match_name starts with 'SF'
+    .like("match_name", "SF%")
+    .order("match_name", { ascending: true });
 
   if (error) {
     console.error("Error fetching semifinal matches:", error);
     throw error;
   }
 
-  const placeholders = [
-    "Winner of QF1",
-    "Winner of QF2",
-    "Winner of QF3",
-    "Winner of QF4",
-  ];
+  if (matches.length !== 4) {
+    console.error("Expected 4 semifinal matches, found", matches.length);
+    throw new Error("Incorrect number of semifinal matches");
+  }
 
-  const updates = matches.map(async (match) => {
-    const updatedFields = {};
+  const updates = matches.map(async (match, matchIndex) => {
+    let homeTeam, awayTeam;
 
-    placeholders.forEach((placeholder, index) => {
-      const teamName = teams[index];
+    if (matchIndex < 2) {
+      // First two matches: team[0] vs team[1]
+      homeTeam = matchIndex === 0 ? teams[0] : teams[1];
+      awayTeam = matchIndex === 0 ? teams[1] : teams[0];
+    } else {
+      // Last two matches: team[2] vs team[3]
+      homeTeam = matchIndex === 2 ? teams[2] : teams[3];
+      awayTeam = matchIndex === 2 ? teams[3] : teams[2];
+    }
 
-      if (match.home_team === placeholder) {
-        updatedFields.home_team = teamName;
-      }
+    const updatedFields = {
+      home_team: homeTeam,
+      away_team: awayTeam,
+    };
 
-      if (match.away_team === placeholder) {
-        updatedFields.away_team = teamName;
-      }
-    });
+    const { error: updateError } = await supabase
+      .from("matches")
+      .update(updatedFields)
+      .eq("id", match.id);
 
-    if (Object.keys(updatedFields).length > 0) {
-      const { error: updateError } = await supabase
-        .from("matches")
-        .update(updatedFields)
-        .eq("id", match.id);
-
-      if (updateError) {
-        console.error(`Error updating match ID ${match.id}:`, updateError);
-        throw updateError;
-      }
+    if (updateError) {
+      console.error(`Error updating match ID ${match.id}:`, updateError);
+      throw updateError;
     }
   });
 
   await Promise.all(updates);
 
-  console.log("Team names updated successfully in matches starting with 'SF'.");
+  console.log("Team names updated successfully in semifinal matches.");
 };
 
 export const updateFinalTeams = async (teams, tournamentId) => {
