@@ -146,6 +146,14 @@ const App = () => {
 
   const handleUpdateScore = async () => {
     try {
+      if (Number(homeScore) < 0 || Number(awayScore) < 0) {
+        throw new Error("Score cannot be less than 0");
+      }
+
+      if (Number(homeScore) > 50 || Number(awayScore) > 50) {
+        throw new Error("Unrealistic score given");
+      }
+
       if (selectedMatch && homeScore !== "" && awayScore !== "") {
         const completedAt = new Date().toISOString();
         console.log(
@@ -278,7 +286,7 @@ const App = () => {
           alt="Football Icon"
           className="w-8 h-8 sm:w-10 sm:h-10 mr-2 sm:mr-4"
         />
-        <h1 className="text-2xl sm:text-3xl font-bold">Friends League</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">SOCCER BRO</h1>
       </div>
       {notification && (
         <Notification message={notification.message} type={notification.type} />

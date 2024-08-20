@@ -31,7 +31,7 @@ const UpdateScorePopup = ({
               value={homeScore}
               onChange={(e) => setHomeScore(e.target.value)}
               className="w-20 p-2 border rounded-md text-center"
-              min="0"
+              min={0}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -43,7 +43,7 @@ const UpdateScorePopup = ({
               value={awayScore}
               onChange={(e) => setAwayScore(e.target.value)}
               className="w-20 p-2 border rounded-md text-center"
-              min="0"
+              min={0}
             />
           </div>
         </div>
