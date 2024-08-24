@@ -1,6 +1,6 @@
 import React from "react";
 
-const MatchCard = ({ match, onSelect }) => {
+const MatchCard = ({ match, onSelect, hideUpdateButton = false }) => {
   const getInitials = (name) => name.slice(0, 1).toUpperCase();
 
   return (
@@ -35,23 +35,25 @@ const MatchCard = ({ match, onSelect }) => {
           </span>
         </div>
       </div>
-      <div className="flex-shrink-0 ml-auto">
-        <button
-          onClick={() => onSelect(match)}
-          className={`${
-            match.completedAt
-              ? "bg-transparent text-gray-700 font-semibold py-2 px-4"
-              : "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-full"
-          }`}
-          style={
-            match.completedAt
-              ? { textDecoration: "underline", cursor: "pointer" }
-              : {}
-          }
-        >
-          {match.completedAt ? "Update Score" : "Save Score"}
-        </button>
-      </div>
+      {!hideUpdateButton && (
+        <div className="flex-shrink-0 ml-auto">
+          <button
+            onClick={() => onSelect(match)}
+            className={`${
+              match.completedAt
+                ? "bg-transparent text-gray-700 font-semibold py-2 px-4"
+                : "bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-full"
+            }`}
+            style={
+              match.completedAt
+                ? { textDecoration: "underline", cursor: "pointer" }
+                : {}
+            }
+          >
+            {match.completedAt ? "Update Score" : "Save Score"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

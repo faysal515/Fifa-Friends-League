@@ -43,7 +43,7 @@ export const calculateSemiFinalists = (matches) => {
     let teamTwoAwayGoals = 0;
 
     qfMatches.forEach((match) => {
-      const { homeTeam, awayTeam, homeScore, awayScore } = match;
+      const { homeTeam, homeScore, awayScore } = match;
 
       // Ensure scores are numbers
       const homeScoreNum = Number(homeScore);
@@ -125,7 +125,7 @@ export const calculateFinalists = (matches) => {
     let teamTwoAwayGoals = 0;
 
     sfMatches.forEach((match) => {
-      const { homeTeam, awayTeam, homeScore, awayScore } = match;
+      const { homeTeam, homeScore, awayScore } = match;
 
       // Ensure scores are numbers
       const homeScoreNum = Number(homeScore);

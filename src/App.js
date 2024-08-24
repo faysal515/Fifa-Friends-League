@@ -21,6 +21,8 @@ import {
 } from "./supabaseFunctions";
 import LeagueTournamentTab from "./LeagueTournamentTab";
 import MatchCard from "./MatchCard";
+import { CopyToClipboard } from "react-copy-to-clipboard";
+import CopyIcon from "./copy.svg";
 
 const App = () => {
   const [user, setUser] = useState(null); // State to track authenticated user
@@ -37,6 +39,8 @@ const App = () => {
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [noTournamentsFound, setNoTournamentsFound] = useState(false);
   const [noMatchesFound, setNoMatchesFound] = useState(false);
+
+  const baseUrl = window.location.origin;
 
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
@@ -274,9 +278,7 @@ const App = () => {
                       ? "bg-gray-100"
                       : "hover:bg-gray-100"
                   }`}
-                  onClick={() => {
-                    setSelectedTournament(tournament);
-                  }}
+                  onClick={() => setSelectedTournament(tournament)}
                 >
                   <img
                     src={tournament.winner ? Cup : Shoe}
@@ -291,6 +293,18 @@ const App = () => {
                       </span>
                     )}
                   </div>
+                  <CopyToClipboard
+                    text={`${baseUrl}/t?id=${tournament.id}`}
+                    onCopy={() => showNotification("Link copied to clipboard")}
+                  >
+                    <button className="ml-3 p-1 hover:bg-gray-200 rounded">
+                      <img
+                        src={CopyIcon}
+                        alt="Copy Icon"
+                        className="w-5 h-5 flex-shrink-0"
+                      />
+                    </button>
+                  </CopyToClipboard>
                 </li>
               ))}
             </ul>

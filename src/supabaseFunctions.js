@@ -44,6 +44,21 @@ export const getTournamentsFromSupabase = async (createdBy) => {
   console.log("Tournaments fetched successfully:", data);
   return data.map(convertKeysToCamelCase);
 };
+export const getTournamentDetails = async (tournamentId) => {
+  const { data, error } = await supabase
+    .from("tournaments")
+    .select("*")
+    .eq("id", tournamentId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching tournament details:", error);
+    throw error;
+  }
+
+  console.log("Tournament details fetched successfully:", data);
+  return convertKeysToCamelCase(data);
+};
 
 export const insertMatchesInBulk = async (matches) => {
   const matchesInSnakeCase = matches.map(convertKeysToSnakeCase);
@@ -74,7 +89,7 @@ export const getMatchesFromSupabase = async (tournamentId) => {
     throw error;
   }
 
-  console.log("Matches fetched successfully:", data);
+  console.log("Matches fetched successfully:", data.length);
   return data.map(convertKeysToCamelCase);
 };
 
@@ -166,7 +181,7 @@ export const updateFinalTeams = async (teams, tournamentId) => {
 };
 
 export const updateTournament = async (tournamentId, winner) => {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("tournaments")
     .update(
       convertKeysToSnakeCase({

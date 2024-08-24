@@ -1,17 +1,40 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import PublicTournament from "./TournamentPublicView";
+import reportWebVitals from "./reportWebVitals";
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+import {
+  RouterProvider,
+  Route,
+  RootRoute,
+  createRouter,
+} from "@tanstack/react-router";
+
+const rootRoute = new RootRoute();
+
+const indexRoute = new Route({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  component: App,
+});
+
+const tournamentsRoute = new Route({
+  getParentRoute: () => rootRoute,
+  path: "/t",
+  component: PublicTournament,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, tournamentsRoute]);
+
+const router = new createRouter({ routeTree });
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <App />
+    <RouterProvider router={router} />
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
