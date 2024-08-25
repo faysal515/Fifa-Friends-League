@@ -23,6 +23,7 @@ import LeagueTournamentTab from "./LeagueTournamentTab";
 import MatchCard from "./MatchCard";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import CopyIcon from "./copy.svg";
+import ReactGA from "react-ga4";
 
 const App = () => {
   const [user, setUser] = useState(null); // State to track authenticated user
@@ -175,6 +176,11 @@ const App = () => {
           completedAt,
         });
 
+        ReactGA.event({
+          category: "Match",
+          action: "Score_Updated",
+        });
+
         // Update the match result in the local state
         const updatedMatches = matches.map((match) =>
           match.id === selectedMatch.id
@@ -219,6 +225,15 @@ const App = () => {
       }
     } catch (error) {
       console.error("Failed to update score:", error);
+      ReactGA.event({
+        category: "Match",
+        action: "Score_Update_Failed",
+        label: JSON.stringify({
+          matchId: selectedMatch.id,
+          homeScore: Number(homeScore),
+          awayScore: Number(awayScore),
+        }),
+      });
       showNotification(error.message, "error");
     }
   };

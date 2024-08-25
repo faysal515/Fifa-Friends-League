@@ -1,14 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ShowPassword from "./show-pass.svg";
 import HidePassword from "./hide-pass.svg";
-import supabase from "./supabaseClient"; // Import the Supabase client
+import supabase from "./supabaseClient";
+import ReactGA from "react-ga4";
 
 const Auth = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(true); // State to toggle between login and signup
+  const [isLogin, setIsLogin] = useState(true);
+
+  useEffect(() => {
+    if (isLogin) {
+      ReactGA.send("pageview", "/login");
+    } else {
+      ReactGA.send("pageview", "/signup");
+    }
+  }, [isLogin]);
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -20,13 +29,23 @@ const Auth = ({ onLogin }) => {
           password,
         });
 
+        ReactGA.event({
+          category: "Registration",
+          action: "Login",
+        });
+
         if (error) throw error;
-        onLogin(data.user); // Pass the authenticated user to the parent component
+        onLogin(data.user);
       } else {
         // Signup flow
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+        });
+
+        ReactGA.event({
+          category: "Registration",
+          action: "Signup",
         });
 
         if (error) throw error;

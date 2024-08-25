@@ -1,21 +1,26 @@
 {
   "short_name": "FC Friends Leagues",
-  "name": "Track records of fifa played",
+  "name": "Track records Soccer Tournaments",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "preview.webp",
+      "sizes": "64x64",
+      "type": "image/webp"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
+      "src": "preview.webp",
+      "sizes": "128x128",
+      "type": "image/webp"
     },
     {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "src": "preview.webp",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "preview.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
     }
   ],
   "start_url": ".",

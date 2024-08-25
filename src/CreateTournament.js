@@ -5,6 +5,7 @@ import {
   insertMatchesInBulk,
 } from "./supabaseFunctions";
 import supabase from "./supabaseClient";
+import ReactGA from "react-ga4";
 import { generateMatches } from "./utils";
 
 const CreateTournamentPopup = ({
@@ -92,6 +93,11 @@ const CreateTournamentPopup = ({
 
       await insertMatchesInBulk(matches);
 
+      ReactGA.event({
+        category: "Tournament",
+        action: "Created",
+      });
+
       const tournamentsList = await getTournamentsFromSupabase(user.id);
       console.log("Tounament found ", tournamentsList, user);
 
@@ -106,6 +112,11 @@ const CreateTournamentPopup = ({
       setErrorMessage("");
     } catch (error) {
       setErrorMessage(error.message);
+      ReactGA.event({
+        category: "Tournament",
+        action: "Created_Failed",
+        label: JSON.stringify({ tournamentName, teamNames, tournamentType }),
+      });
     } finally {
       setIsCreating(false);
     }

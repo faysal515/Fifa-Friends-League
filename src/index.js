@@ -2,6 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
+import ReactGA from "react-ga4";
+
 import PublicTournament from "./TournamentPublicView";
 import reportWebVitals from "./reportWebVitals";
 
@@ -11,6 +13,9 @@ import {
   RootRoute,
   createRouter,
 } from "@tanstack/react-router";
+
+const TRACKING_ID = "G-GHNCCHDJGC";
+ReactGA.initialize(TRACKING_ID);
 
 const rootRoute = new RootRoute();
 
